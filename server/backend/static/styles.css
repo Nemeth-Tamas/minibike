@@ -133,3 +133,72 @@ button:hover{filter:brightness(1.1)}
 .award-controls select{border:1px solid var(--border);background:#102630;color:#e5f6ef;padding:7px 10px;border-radius:7px;font:600 11px system-ui}
 .award-rank{display:inline-block;font-size:9px;letter-spacing:.08em;margin-top:6px;border-radius:4px;padding:2px 6px;font-weight:800}
 .rank-bronze{color:#d5a377;background:#533823}.rank-silver{color:#bedce0;background:#24454e}.rank-gold{color:#fbd681;background:#60451c}.rank-diamond{color:#bca8ff;background:#40345d}
+
+/* GEARBOUND v0.5 — combat-first responsive RPG skin. */
+.forge-heading h2{font-size:clamp(25px,3.2vw,35px);letter-spacing:-.045em}
+.forge-stats-foot{display:block;font-size:10px;color:#94abb3;margin-top:7px;line-height:1.4}
+.forge-card{background:radial-gradient(circle at 65% 12%,#243c413f,transparent 55%),radial-gradient(circle at 10% 25%,#4d371e55,transparent 40%),var(--surface)}
+.forge-arena{border:1px solid #8a634166;background:radial-gradient(ellipse at 22% 28%,#493d2b66,transparent 65%),#081821;border-radius:16px;padding:clamp(12px,2vw,23px);margin:16px 0 22px;box-shadow:inset 0 1px #ffffff0c}
+.forge-sector-top{display:flex;justify-content:space-between;gap:12px;align-items:center}
+.forge-sector-top h3{font-size:clamp(19px,2vw,25px);margin:5px 0 13px}
+.forge-wave-label{text-align:right;display:grid;gap:5px;font-size:11px;color:#91aab1}
+.forge-boss-label{font-size:10px;font-weight:800;letter-spacing:.13em;color:#9bd8cc}
+.forge-boss-label.boss{color:#f1ba69;text-shadow:0 0 12px #f7ae4a44}
+.forge-waves{display:flex;gap:7px;margin:4px 0 18px}
+.forge-wave{height:6px;flex:1;background:#2c424e;color:transparent;border-radius:9px;font-size:0}
+.forge-wave.cleared{background:#50bb9d}.forge-wave.active{background:#e6b35c;box-shadow:0 0 13px #e6b35c77}
+.forge-wave.boss:not(.active){background:#72543d}
+.forge-arena-layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.08fr);gap:18px}
+.forge-enemy-panel{border:1px solid #4d4a43;background:linear-gradient(150deg,#23313b77,#111e25);border-radius:12px;padding:19px;text-align:center}
+.forge-enemy-art{font-size:clamp(65px,8vw,100px);line-height:1.3;margin:6px auto;filter:drop-shadow(0 14px 17px #0006);transform-origin:center bottom}
+.forge-impact{animation:forge-hit .35s ease-out}
+@keyframes forge-hit{0%{transform:translateX(0) scale(1)}30%{transform:translateX(9px) scale(1.12)}60%{transform:translateX(-5px) scale(.96)}100%{transform:translateX(0) scale(1)}}
+.forge-enemy-name{font-size:21px;color:#faf5e9;font-weight:850;letter-spacing:-.035em}
+.forge-enemy-panel p{min-height:20px;margin:5px 0 18px;font-size:11px}
+.forge-player-panel{padding:12px 7px;display:flex;flex-direction:column;justify-content:center;gap:12px}
+.forge-health-heading{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-weight:800;color:#b8d5d7;margin:10px 0 8px;text-align:left;letter-spacing:.04em}
+.forge-health-heading strong{font-size:12px;letter-spacing:0;color:#e6f7f3}
+.forge-hp-track{height:12px;border-radius:8px;overflow:hidden;background:#30404a}
+.forge-hp-fill{height:100%;width:100%;border-radius:8px;transition:width .4s ease;min-width:0}
+.forge-hp-fill.enemy{background:linear-gradient(90deg,#b74e3d,#ff9a61)}
+.forge-hp-fill.player{background:linear-gradient(90deg,#227e77,#63e0b0)}
+.forge-combat-stats{display:flex;flex-wrap:wrap;gap:9px;font-size:11px}
+.forge-combat-stats span{background:#1b323b;border:1px solid #35535a;border-radius:8px;padding:8px}
+.forge-last-hit{font-weight:700;color:#f2c483;font-size:12px;min-height:20px}
+.forge-tactic-heading{font-size:10px;letter-spacing:.12em;font-weight:850;color:#acc7cb}
+.forge-tactic-heading small{font-weight:400;letter-spacing:normal;font-size:10px;color:#8197a2;margin-left:8px}
+.forge-tactics{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.forge-tactics button,.forge-tabs button{cursor:pointer;background:#182b34;border:1px solid #36515b;color:#b5cbd0;border-radius:8px;padding:10px 8px;font:700 11px system-ui;transition:background .15s,border-color .15s,color .15s}
+.forge-tactics button.active,.forge-tabs button.active{background:#375043;border-color:#68c4a4;color:#e6fff5}
+.forge-tactics button:hover:not(:disabled),.forge-tabs button:hover{border-color:#8edac1}
+.forge-tactics button:disabled{opacity:.5;cursor:wait}
+.forge-rule{font-size:10px;line-height:1.5}
+.forge-battle-bottom{margin-top:15px;display:grid;grid-template-columns:1fr 1.7fr;gap:12px;align-items:start}
+.forge-battle-counters{display:flex;flex-wrap:wrap;gap:9px;font-size:11px;color:#c2d5d8}
+.forge-battle-counters span{background:#192d35;border-radius:7px;padding:9px}
+.forge-battle-feed{display:grid;gap:5px;max-height:120px;overflow:auto}
+.forge-log-line{font-size:10px;color:#b7cdc9;border-bottom:1px solid #ffffff0b;padding:3px 0}
+.forge-log-empty{font-size:11px;color:#708f96}
+.forge-layout{grid-template-columns:1fr 1fr}
+.forge-section-head{display:flex;justify-content:space-between;align-items:center;gap:9px}
+.forge-count{font-size:11px;color:#e4bc77}
+.forge-tabs{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;margin-bottom:14px}
+.forge-tabs button{font-size:10px;padding:7px 9px}
+.forge-item-grid{margin-top:0}
+.forge-tree{margin-top:0;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.forge-skill{padding:13px}
+.forge-item.forge-locked{opacity:.64}
+.forge-relic-forge{margin-top:16px;border:1px solid #70618b;background:linear-gradient(120deg,#302e4577,#13263177);padding:20px;border-radius:13px}
+.forge-relic-forge h3{color:#e2d3ff;margin:6px 0;font-size:17px}
+.forge-relic-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-top:16px}
+.forge-relic-item{background:#212838;border-color:#605782}
+.forge-relic-item .forge-action{background:#c5a4f2;border-color:#c5a4f2;color:#211b30}
+.forge-relic-item .forge-action:disabled{background:#26313c;color:#8a9aa3;border-color:#43515f}
+@media(max-width:1000px){.forge-arena-layout,.forge-layout{grid-template-columns:1fr}.forge-relic-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:650px){.forge-battle-bottom{grid-template-columns:1fr}.forge-relic-grid,.forge-tree{grid-template-columns:1fr}.forge-tactics{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(prefers-reduced-motion:reduce){.forge-impact{animation:none}.forge-hp-fill{transition:none}}
+.forge-arena-layout > *{min-width:0}
+.forge-rule{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:420px){.forge-tactics button{font-size:10px;padding:8px 4px}.forge-battle-counters{gap:4px}}
+
+.forge-stance-explain{font-size:11px;color:#aaccb5;line-height:1.5}

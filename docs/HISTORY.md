@@ -27,3 +27,14 @@
 5. Run a tested power-loss/EEPROM recovery scenario and a long offline-overflow soak test.
 6. Improve physical strain relief for the EEPROM GND solder repair; secure housing and preserve USB recovery access.
 7. Optionally connect achievement notifications to Home Assistant/Hermes Terminal, with a secret webhook configured outside Git.
+
+
+## 2026-11-20 — v0.5 GEARBOUND
+
+- Expanded the Forge economy into a pedal-powered combat game with 20 production/combat/defense/loot upgrades and 33 skills in six branches. Existing six upgrade IDs, original prices and nine skills were preserved.
+- Added mechanically themed enemies, four normal waves and boss on every sector, enemy/hero health, three combat tactics, skill-based critical damage, protective armor, victory Scrap, permanent boss Relics and four research traits. Combat never progresses during idle time or offline event replay, while Torque can still be earned from actual new delayed events.
+- Kept all real lifetime statistics, achievements, raw events and pre-existing v0.4 saved state intact. Prestige now also resets run-specific combat and Scrap but retains relic resources/research and permanent boss/victory statistics.
+- UI made more game-like with combat arena, wave progress, fight log, shop/skill tabs, relic laboratory and mobile-first layout.
+- Added authenticated same-origin tactics/research routes, additive SQLite tables and backup-first `scripts/upgrade_from_v04.sh`.
+- Added `GAME_DESIGN.md` including explicit battle pacing and safety rules.
+- Server tests and headless browser smoke tests run locally; actual delta2 upgrade and real bike combat validation still pending.

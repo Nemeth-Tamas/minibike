@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101922">
-  <title>Pedal • Forge <title>Pedal • Telemetry</title> Telemetry</title>
-  <link rel="stylesheet" href="/static/styles.css?v=0.4">
-  <script src="/static/feature-ui.js?v=0.4" defer></script>
-  <script src="/static/forge-ui.js?v=0.4" defer></script>
-  <script src="/static/app.js?v=0.4" defer></script>
+  <title>PEDAL · Gearbound v0.5</title>
+  <link rel="stylesheet" href="/static/styles.css?v=0.5">
+  <script src="/static/feature-ui.js?v=0.5" defer></script>
+  <script src="/static/forge-ui.js?v=0.5" defer></script>
+  <script src="/static/app.js?v=0.5" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -17,7 +17,7 @@
       <div class="top-actions"><span class="status"><span id="status-light" class="light"></span><span id="connection">Connecting</span></span><a href="/logout" class="exit">Sign out ↗</a></div>
     </header>
     <nav class="section-nav" aria-label="Dashboard sections">
-      <a href="#cockpit">Cockpit</a><a href="#forge-panel">⚙ Pedal Forge</a><a href="#progress">Goals & RPG</a><a href="#analytics">Analytics</a>
+      <a href="#cockpit">Cockpit</a><a href="#forge-panel">⚔ Gearbound</a><a href="#progress">Goals & RPG</a><a href="#analytics">Analytics</a>
       <a href="#adventure">Adventure</a><a href="#achievement-heading">Milestones</a><a href="#settings">Settings</a>
       <a href="#desktop-overlay">Desktop overlay</a>
     </nav>
@@ -54,23 +54,33 @@
       </article>
     </section>
 
-    <section id="forge-panel" class="card forge-card" aria-label="Pedal Forge incremental game">
-      <div class="card-top"><div><div class="eyebrow">PEDAL FORGE · INCREMENTAL GAME</div><h2>Pedal to power your factory ⚙</h2></div><span class="mini-hint">No click-to-earn. No AFK income.</span></div>
-      <p class="subtle forge-lead">Every newly committed real revolution generates <strong>Torque</strong>. Spend it on upgrades, unlock skills with ride-earned points, and prestige for permanent bonuses. All game actions are saved on delta2. Your real workout data is never reset.</p>
+    <section id="forge-panel" class="card forge-card" aria-label="Gearbound pedal-powered RPG">
+      <div class="card-top forge-heading"><div><div class="eyebrow">PEDAL GEARBOUND · LIVE COMBAT RPG · v0.5</div><h2>⚔️ The Cranklands</h2></div><span class="mini-hint">NO AFK INCOME · NO IDLE DAMAGE</span></div>
+      <p class="subtle forge-lead">Pedal to strike monsters and earn Torque. Defeat enemies for Scrap, invest in production or combat, clear bosses for permanent Relics, then prestige for stronger future runs. Real workouts and lifetime history are never reset.</p>
       <div class="forge-stats">
-        <div class="forge-stat"><small>TORQUE BANK</small><strong class="forge-highlight" id="forge-wallet">0</strong></div>
-        <div class="forge-stat"><small>YIELD</small><strong id="forge-rate">+1 ⚙ / revolution</strong></div>
-        <div class="forge-stat"><small>THIS RUN · REVOLUTIONS</small><strong id="forge-run">0</strong></div>
-        <div class="forge-stat"><small>PRESTIGE CORES</small><strong id="forge-cores">0</strong></div>
+        <div class="forge-stat"><small>⚙ TORQUE BANK</small><strong class="forge-highlight" id="forge-wallet">0</strong><span id="forge-rate" class="forge-stats-foot">+1 per revolution</span></div>
+        <div class="forge-stat"><small>🔩 SCRAP</small><strong id="forge-scrap">0</strong><span class="forge-stats-foot">From defeated enemies</span></div>
+        <div class="forge-stat"><small>💎 RELICS</small><strong id="forge-relics">0</strong><span class="forge-stats-foot">Earn from sector bosses</span></div>
+        <div class="forge-stat"><small>✨ PRESTIGE CORES</small><strong id="forge-cores">0</strong><span class="forge-stats-foot">Permanent production bonus</span></div>
       </div>
-      <div class="forge-meta"><span id="forge-combo">Build a cadence streak for bonuses</span><span><strong id="forge-credited">0</strong> game revolutions · Prestige <strong id="forge-prestige-level">0</strong></span></div>
+      <div class="forge-meta"><span id="forge-combo">Build a cadence combo for bonus damage</span><span><strong id="forge-run">0</strong> this run · <strong id="forge-credited">0</strong> game revolutions · Prestige <strong id="forge-prestige-level">0</strong></span></div>
+      <div class="forge-arena" aria-label="Live enemy encounter">
+        <div class="forge-sector-top"><div><span class="eyebrow">REGION <strong id="forge-sector">1</strong></span><h3 id="forge-sector-name">Scrapyard Outskirts</h3></div><div class="forge-wave-label"><span id="forge-boss-label" class="forge-boss-label">FIELD ENCOUNTER</span><small id="forge-wave-count">Wave 1 / 5</small></div></div>
+        <div id="forge-waves" class="forge-waves" aria-label="Sector encounter progression"></div>
+        <div class="forge-arena-layout">
+          <div class="forge-enemy-panel"><div id="forge-enemy-art" class="forge-enemy-art" aria-hidden="true">🐀</div><div class="forge-enemy-name" id="forge-enemy-name">Rust Rat</div><p class="subtle" id="forge-enemy-desc">Approaching...</p><div class="forge-health-heading"><span>ENEMY HULL</span><strong id="forge-enemy-health">55 / 55</strong></div><div class="forge-hp-track"><div id="forge-enemy-bar" class="forge-hp-fill enemy"></div></div></div>
+          <div class="forge-player-panel"><div class="forge-health-heading"><span>YOUR MACHINE</span><strong id="forge-player-health">100 / 100</strong></div><div class="forge-hp-track"><div id="forge-player-bar" class="forge-hp-fill player"></div></div><div class="forge-combat-stats"><span>⚔️ Damage <b id="forge-attack">2</b></span><span>🛡️ Armor <b id="forge-armor">0</b></span><span>💥 Crit / <b id="forge-crit">13</b> hits</span></div><div class="forge-last-hit" id="forge-last-hit">Each new live revolution strikes the enemy.</div><div class="forge-tactic-heading">COMBAT STANCE <small>Changes next pedal strike</small></div><div id="forge-tactics" class="forge-tactics"><button data-forge-action="tactic" data-key="balanced" type="button">⚖️ Balanced</button><button data-forge-action="tactic" data-key="assault" type="button">⚔️ Assault</button><button data-forge-action="tactic" data-key="guard" type="button">🛡️ Guard</button></div><div class="forge-stance-explain" id="forge-stance-explain">Balanced: normal damage and defense.</div><p class="mini-hint forge-rule">Enemy counterattacks only on every eighth live pedal hit. Stopping means a complete pause, not a penalty.</p></div>
+        </div>
+        <div class="forge-battle-bottom"><div class="forge-battle-counters"><span>💀 <b id="forge-kills">0</b> defeated</span><span>👑 <b id="forge-bosses">0</b> bosses</span><span>🧰 <b id="forge-retreats">0</b> repairs</span></div><div id="forge-battle-feed" class="forge-battle-feed" aria-live="off"></div></div>
+      </div>
       <div class="forge-layout">
-        <div class="forge-block"><h3>⚙ Upgrade workshop</h3><p class="subtle">Spend Torque for more Torque per pedal revolution. Every purchase is permanent for this run.</p><div id="forge-upgrades" class="forge-item-grid"><span class="placeholder">Loading workshop…</span></div></div>
-        <div class="forge-block"><h3>🌳 Skill tree</h3><p class="subtle"><strong id="forge-points">0 free / 0 earned</strong> · <span id="forge-point-next">150 rev to next skill point</span>. Prerequisites are visible; skills reset on prestige.</p><div id="forge-skills" class="forge-tree"><span class="placeholder">Loading skill tree…</span></div></div>
+        <div class="forge-block"><div class="forge-section-head"><div><h3>🛠️ Upgrade workshop <span id="forge-upgrade-count" class="forge-count"></span></h3><p class="subtle">Choose your build: Torque generation, damage, defense, or loot.</p></div></div><div id="forge-shop-tabs" class="forge-tabs" role="group" aria-label="Workshop category"></div><div id="forge-upgrades" class="forge-item-grid"><span class="placeholder">Loading workshop…</span></div></div>
+        <div class="forge-block"><div class="forge-section-head"><div><h3>🌳 Skill tree <span id="forge-skill-count" class="forge-count"></span></h3><p class="subtle"><strong id="forge-points">0 free / 0 earned</strong> · <span id="forge-point-next">150 rev to next skill point</span>. Pick a specialization; points reset on prestige.</p></div></div><div id="forge-skill-tabs" class="forge-tabs" role="group" aria-label="Skill branch"></div><div id="forge-skills" class="forge-tree"><span class="placeholder">Loading skill tree…</span></div></div>
       </div>
-      <div class="forge-prestige"><div class="forge-prestige-head"><h3>✨ Prestige forge</h3><span class="mini-hint">Permanent power, fresh run</span></div><div class="progress-track"><div id="forge-prestige-bar" class="progress-fill"></div></div><div class="forge-prestige-desc"><span id="forge-prestige-progress">0 / 2,000 rev to prestige</span><span id="forge-prestige-reward">+1 permanent core</span></div><button id="forge-prestige" type="button" data-forge-action="prestige" disabled>Prestige · reset this run</button><p class="subtle">Resets only game wallet, upgrades, skill tree and run progression. Keeps your lifetime workout totals, achievements, total game revolutions and earned cores.</p></div>
+      <div class="forge-relic-forge"><div class="forge-section-head"><div><span class="eyebrow">PERMANENT RESEARCH</span><h3>💎 Relic Laboratory</h3><p class="subtle">Boss relics can be invested in these permanent traits. They survive prestige.</p></div><span class="forge-level" id="forge-relic-balance">0 available</span></div><div id="forge-permanent" class="forge-relic-grid"></div></div>
+      <div class="forge-prestige"><div class="forge-prestige-head"><h3>✨ Prestige forge</h3><span class="mini-hint">Trade one run for stronger future ones</span></div><div class="progress-track"><div id="forge-prestige-bar" class="progress-fill"></div></div><div class="forge-prestige-desc"><span id="forge-prestige-progress">0 / 2,000 rev to prestige</span><span id="forge-prestige-reward">+1 permanent core</span></div><button id="forge-prestige" type="button" data-forge-action="prestige" disabled>Prestige · reset this run</button><p class="subtle">Resets Torque, Scrap, upgrade/skill levels and enemies back to Sector 1. <strong>Keeps</strong> your boss relics, permanent research, permanent cores, lifetime victories, exercise history and all achievements.</p></div>
       <div id="forge-message" role="status" aria-live="polite"></div>
-      <div id="forge-pulse" class="mini-hint">Awaiting your first game revolution…</div>
+      <div id="forge-pulse" class="mini-hint">Awaiting your next game revolution…</div>
     </section>
     <section class="card rpg-card">
       <div class="card-top"><div><div class="eyebrow">PEDAL RPG</div><h2>Level <span id="rpg-level">1</span> <span class="accent" id="level-title">— Desk Cyclist</span></h2></div><span class="rpg-xp" id="rpg-xp">0 XP</span></div>

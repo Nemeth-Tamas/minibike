@@ -1,0 +1,32 @@
+name: PEDAL quality checks
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test-server:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install server test dependencies
+        run: |
+          python -m pip install -r server/backend/requirements.txt pytest httpx
+      - name: Run all server tests
+        working-directory: server
+        run: python -m pytest -q
+      - name: Validate JavaScript and shell scripts
+        run: |
+          node --check server/backend/static/app.js
+          node --check server/backend/static/feature-ui.js
+          node --check server/backend/static/forge-ui.js
+          bash -n server/scripts/upgrade_from_v04.sh
+  test-firmware-journal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run host-side EEPROM journal and debouncer tests
+        run: bash firmware/tests/run.sh

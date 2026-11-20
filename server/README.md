@@ -1,3 +1,20 @@
+# PEDAL v0.5 — GEARBOUND combat RPG and real-time cycling telemetry
+
+**Latest upgrade:** `UPGRADE-v0.5.md`, for existing v0.4 installations. Source is canonical at https://github.com/Nemeth-Tamas/minibike.
+
+## GEARBOUND features
+
+- 20 workshop upgrades covering Torque production, offensive gear, defense, and scavenging.
+- 33 skill nodes across 6 visible branches, bought with actual pedaling-earned skill points.
+- 5 encounters per sector (4 mechanical enemies + boss), with enemy health, your hull, critical hits, cadence combos, combat log, and tactical stances.
+- A second currency, Scrap, is earned by defeating enemies; boss relics buy 4 permanent research traits.
+- Prestige carries over cores, relics and permanent research, while resetting only the run economy and enemies. Real exercise data is untouched.
+- No click-to-earn or AFK income. Neither the player nor enemy advances without new live sensor pulses.
+
+See `../docs/GAME_DESIGN.md` for detailed formulas and balance assumptions.
+
+---
+
 # PEDAL v0.4 — Forge Incremental Game + 40 Visible Achievements
 
 **Compatible with deployed v0.3:** no ESP32-C6 firmware change, MQTT topic/protocol change, password change, new port, new Docker service or host networking. Your existing event telemetry system is preserved. Use `UPGRADE-v0.4.md` for a copy/paste-safe upgrade on delta2.

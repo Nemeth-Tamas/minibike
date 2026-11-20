@@ -382,3 +382,25 @@ async def api_forge_prestige(device: str, request: Request):
         return game.prestige(device)
     except (ValueError, json.JSONDecodeError) as exc:
         return JSONResponse({'error': str(exc)}, status_code=400)
+
+# v0.5 GEARBOUND. All combat advancement comes from MQTT ingest, never HTTP.
+@app.post('/api/v1/devices/{device}/forge/tactic')
+async def api_forge_tactic(device: str, request: Request):
+    try:
+        obj = await _small_json(request)
+        if set(obj) != {'tactic'} or not isinstance(obj['tactic'], str):
+            raise ValueError('tactic required')
+        return game.set_tactic(device, obj['tactic'])
+    except (ValueError, json.JSONDecodeError) as exc:
+        return JSONResponse({'error': str(exc)}, status_code=400)
+
+
+@app.post('/api/v1/devices/{device}/forge/relic')
+async def api_forge_relic(device: str, request: Request):
+    try:
+        obj = await _small_json(request)
+        if set(obj) != {'trait_id'} or not isinstance(obj['trait_id'], str):
+            raise ValueError('trait_id required')
+        return game.permanent_upgrade(device, obj['trait_id'])
+    except (ValueError, json.JSONDecodeError) as exc:
+        return JSONResponse({'error': str(exc)}, status_code=400)
