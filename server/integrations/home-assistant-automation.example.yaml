@@ -1,0 +1,21 @@
+# OPTIONAL Home Assistant automation example. Replace webhook ID with a new
+# long random secret. Keep this URL/private secret out of source control.
+# HTTP POST to http://YOUR-HA:8123/api/webhook/YOUR_LONG_RANDOM_ID
+# You can replace persistent_notification with TTS to your Hermes Terminal
+# once you've selected a supported TTS/media_player service in your HA setup.
+alias: 'PEDAL — Achievement Unlocked'
+triggers:
+  - trigger: webhook
+    webhook_id: REPLACE_WITH_A_LONG_RANDOM_SECRET
+    allowed_methods:
+      - POST
+    local_only: true
+actions:
+  - action: persistent_notification.create
+    data:
+      title: 'PEDAL achievement unlocked'
+      message: >-
+        {{ trigger.json.achievement.icon }}
+        {{ trigger.json.achievement.name }}
+        — Your mini bike is officially overengineered.
+mode: queued

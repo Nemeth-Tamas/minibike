@@ -1,0 +1,78 @@
+name: pedal-telemetry
+
+services:
+  mqtt:
+    image: eclipse-mosquitto:2
+    restart: unless-stopped
+    ports:
+      - "${BIND_IP:-0.0.0.0}:${MQTT_PORT:?Run scripts/init.sh first}:1883"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config:ro
+      - mqtt-data:/mosquitto/data
+    networks:
+      - pedal-net
+    security_opt:
+      - no-new-privileges:true
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    depends_on:
+      - mqtt
+    environment:
+      DB_PATH: /data/pedals.sqlite3
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+      MQTT_USER: backend
+      MQTT_PASSWORD: ${MQTT_BACKEND_PASSWORD:?Run scripts/init.sh first}
+      DASHBOARD_USER: ${DASHBOARD_USER:-admin}
+      DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:?Run scripts/init.sh first}
+      SESSION_SECRET: ${SESSION_SECRET:?Run scripts/init.sh first}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TZ: Europe/Budapest
+      DEVICE_ID: ${DEVICE_ID:-bike-001}
+    ports:
+      - "${BIND_IP:-0.0.0.0}:${WEB_PORT:?Run scripts/init.sh first}:8000"
+    volumes:
+      - pedal-data:/data
+    networks:
+      - pedal-net
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health',timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  simulator:
+    profiles: ["tools"]
+    build: ./simulator
+    depends_on:
+      - mqtt
+      - backend
+    environment:
+      MQTT_HOST: mqtt
+      MQTT_PORT: 1883
+      MQTT_USER: bike
+      MQTT_PASSWORD: ${MQTT_DEVICE_PASSWORD:?Run scripts/init.sh first}
+      DEVICE_ID: ${DEVICE_ID:-bike-001}
+      STATE_PATH: /state/simulator.json
+    volumes:
+      - simulator-data:/state
+    networks:
+      - pedal-net
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  pedal-net:
+    driver: bridge
+
+volumes:
+  mqtt-data:
+  pedal-data:
+  simulator-data:

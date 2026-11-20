@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+.pytest_cache/
+mosquitto/config/passwords
+*.sqlite3
+simulator.json

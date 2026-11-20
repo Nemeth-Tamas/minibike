@@ -1,0 +1,7 @@
+# OPTIONAL: save this as compose.override.yaml in the RUNNING pedal-telemetry
+# folder to enable outbound achievement events to Home Assistant or n8n.
+# No new ports. The existing backend continues to use the Docker bridge.
+services:
+  backend:
+    environment:
+      PEDAL_WEBHOOK_URL: ${PEDAL_WEBHOOK_URL:-}

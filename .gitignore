@@ -1,0 +1,24 @@
+# Never commit credentials or live activity data
+.env
+.env.*
+!.env.example
+**/secrets.h
+**/mosquitto/config/passwords
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.bak
+*.backup
+*.zip
+upgrade-backups/
+**/upgrade-backups/
+**/.pio/
+**/build/
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+**/.DS_Store
+*.pyc
+*.log

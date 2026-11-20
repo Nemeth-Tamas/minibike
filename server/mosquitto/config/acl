@@ -1,0 +1,7 @@
+user bike
+topic write pedal/v1/bike-001/events
+topic read pedal/v1/bike-001/ack
+
+user backend
+topic read pedal/v1/+/events
+topic write pedal/v1/+/ack
