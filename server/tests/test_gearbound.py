@@ -173,18 +173,28 @@ def test_fresh_database_and_upgrade_from_legacy_forge_save():
     assert next(u for u in state['upgrades'] if u['id']=='chain')['level']==4
 
 
-def test_battle_pacing_starter_boss_requires_combat_investment():
-    # No upgrades: starter runs beat the four minions but struggle with the boss.
-    # This is the intentional early-game investment choice.
+def test_battle_pacing_starter_boss_takes_time_without_forced_retreat():
+    # A starter build reaches the boss and keeps its progress at one hull.
     game.state(DEVICE)
     now=int(time.time()*1000)
     with store.db() as con:
         for i in range(500):
             game.on_event(con,DEVICE,now+i*1000,now+i*1000)
-    c=game.state(DEVICE)['combat']
-    assert c['wave']>=4 and c['scrap']>30
-    assert c['retreats']>=1
-    assert c['sector']==1
+    state=game.state(DEVICE)
+    c=state['combat']
+    assert c['sector']==1 and c['enemy']['boss']
+    assert 0<c['enemy_hp']<c['enemy_max_hp']
+    assert c['hero_hp']==1 and c['retreats']==0
+    assert c['scrap']>30 and state['run_revs']==500
+
+    # Continued pedaling can finish the damaged boss without buying an upgrade.
+    with store.db() as con:
+        for i in range(500,520):
+            game.on_event(con,DEVICE,now+i*1000,now+i*1000)
+    state=game.state(DEVICE)
+    c=state['combat']
+    assert c['sector']==2 and c['bosses_total']==1
+    assert c['retreats']==0 and state['run_revs']==520
 
 
 def test_scrap_and_torque_dual_currency_purchase_is_atomic():
