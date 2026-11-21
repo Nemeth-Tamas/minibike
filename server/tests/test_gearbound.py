@@ -197,6 +197,35 @@ def test_battle_pacing_starter_boss_takes_time_without_forced_retreat():
     assert c['retreats']==0 and state['run_revs']==520
 
 
+def test_flywheel_burst_charges_on_live_hits_at_any_cadence():
+    now = int(time.time() * 1000)
+    assert game.state(DEVICE)['combat']['burst'] is None
+    with store.db() as con:
+        con.execute('UPDATE forge_state SET run_revs=150 WHERE device_id=?', (DEVICE,))
+    game.learn(DEVICE, 'flywheel_burst')
+
+    for seq in range(1, 12):
+        send(seq, now + seq * 2000)
+    before = game.state(DEVICE)['combat']
+    assert before['burst'] == {'charge': 11, 'hits': 12}
+    assert before['enemy_hp'] == 33
+
+    # Backfill, duplicate and fitness-only revolutions never charge the skill.
+    assert send(12, now - 60000, now + 24000)['inserted'] == 1
+    assert send(11, now + 22000)['inserted'] == 0
+    game.set_enabled(DEVICE, False)
+    assert send(13, now + 26000)['inserted'] == 1
+    store.initialize()
+    assert game.state(DEVICE)['combat'] == before
+
+    game.set_enabled(DEVICE, True)
+    assert send(14, now + 28000)['inserted'] == 1
+    after = game.state(DEVICE)['combat']
+    assert after['burst'] == {'charge': 0, 'hits': 12}
+    assert after['last_hit'] == 8 and after['enemy_hp'] == 25
+    assert any('Flywheel Burst' in item['description'] for item in after['log'])
+
+
 def test_scrap_and_torque_dual_currency_purchase_is_atomic():
     game.state(DEVICE)
     with store.db() as c:

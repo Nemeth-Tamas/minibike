@@ -1,5 +1,5 @@
 'use strict';
-/* PEDAL GEARBOUND v0.5.1 — server-persisted GAME ON/OFF, no forced resets. */
+/* PEDAL GEARBOUND — arena, skills and game mode. */
 window.PedalForge = (() => {
   let device = 'bike-001';
   let lastFetch = 0;
@@ -78,7 +78,7 @@ window.PedalForge = (() => {
     });
     holder.replaceChildren(frag);
   }
-  function renderArena(c,prev) {
+  function renderArena(c,prev,active) {
     set('forge-scrap',fmt(c.scrap));
     set('forge-relics',fmt(c.relics));
     set('forge-sector',fmt(c.sector));
@@ -113,14 +113,32 @@ window.PedalForge = (() => {
       b.disabled=working;
     });
     set('forge-stance-explain',{balanced:'⚖️ Balanced · normal attack and incoming damage',assault:'⚔️ Assault · +50% outgoing damage, +50% incoming damage',guard:'🛡️ Guard · -20% outgoing damage, -35% incoming damage'}[c.tactic]);
+    const burst=c.burst;
+    const burstPanel=el('forge-burst');
+    burstPanel.hidden=!burst;
+    let burstFired=false;
+    if(burst) {
+      const meter=el('forge-burst-meter');
+      meter.max=burst.hits;
+      meter.value=burst.charge;
+      const remaining=burst.hits-burst.charge;
+      burstPanel.classList.toggle('forge-burst-ready',remaining===1 && active);
+      const charge=remaining===1 ? 'Next hit fires' : `${remaining} hits to burst`;
+      set('forge-burst-status',active ? charge : `Paused · ${charge.toLowerCase()}`);
+      // A dashboard refresh can include more than one pedal stroke.
+      burstFired=Boolean(prev?.burst &&
+        Math.floor(c.attacks/burst.hits)>Math.floor(prev.attacks/burst.hits));
+    }
     const hit=c.last_hit ? `-${fmt(c.last_hit)} enemy hull${c.last_crit?' · 💥 CRITICAL':''}${c.last_counter?` · ${fmt(c.last_counter)} counter damage`:''}` : 'Pedal to land your first strike.';
-    set('forge-last-hit',hit);
+    set('forge-last-hit',burstFired ? `⚡ Flywheel Burst fired! · ${hit}` : hit);
     const logHolder=el('forge-battle-feed');
     logHolder.replaceChildren(...c.log.map(item=>node('div','forge-log-line',item.description)));
     if(!c.log.length) logHolder.append(node('span','forge-log-empty','Your victories will appear here.'));
     if(prev && c.attacks>prev.attacks) {
       const art=el('forge-enemy-art');
-      art.classList.remove('forge-impact');void art.offsetWidth;art.classList.add('forge-impact');
+      art.classList.remove('forge-impact','forge-burst-impact');
+      void art.offsetWidth;
+      art.classList.add(burstFired ? 'forge-burst-impact' : 'forge-impact');
     }
   }
   function render(s) {
@@ -163,7 +181,7 @@ window.PedalForge = (() => {
     set('forge-prestige-reward',`+${fmt(s.next_prestige_cores)} permanent core(s) · +10% yield each`);
     fill('forge-prestige-bar',s.run_revs,s.prestige_min_revs);
     el('forge-prestige').disabled=!s.prestige_available||working;
-    renderArena(s.combat,prev?.combat);
+    renderArena(s.combat,prev?.combat,active);
     const shopCategories=[...new Set(s.upgrades.map(i=>i.category))];
     if(!shopCategories.includes(shopTab)) shopTab=shopCategories[0];
     tabs('forge-shop-tabs',shopCategories,shopTab,'shop');

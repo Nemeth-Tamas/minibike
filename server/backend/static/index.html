@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101922">
-  <title>PEDAL · Gearbound v0.5.1</title>
-  <link rel="stylesheet" href="/static/styles.css?v=0.5.1">
+  <title>PEDAL · Gearbound</title>
+  <link rel="stylesheet" href="/static/styles.css?v=0.6-dev">
   <script src="/static/feature-ui.js?v=0.5.1" defer></script>
-  <script src="/static/forge-ui.js?v=0.5.1" defer></script>
+  <script src="/static/forge-ui.js?v=0.6-dev" defer></script>
   <script src="/static/app.js?v=0.5.1" defer></script>
 </head>
 <body>
@@ -71,6 +71,13 @@
         <div class="forge-arena-layout">
           <div class="forge-enemy-panel"><div id="forge-enemy-art" class="forge-enemy-art" aria-hidden="true">🐀</div><div class="forge-enemy-name" id="forge-enemy-name">Rust Rat</div><p class="subtle" id="forge-enemy-desc">Approaching...</p><div class="forge-health-heading"><span>ENEMY HULL</span><strong id="forge-enemy-health">55 / 55</strong></div><div class="forge-hp-track"><div id="forge-enemy-bar" class="forge-hp-fill enemy"></div></div></div>
           <div class="forge-player-panel"><div class="forge-health-heading"><span>YOUR MACHINE</span><strong id="forge-player-health">100 / 100</strong></div><div class="forge-hp-track"><div id="forge-player-bar" class="forge-hp-fill player"></div></div><div class="forge-combat-stats"><span>⚔️ Damage <b id="forge-attack">2</b></span><span>🛡️ Armor <b id="forge-armor">0</b></span><span>💥 Crit / <b id="forge-crit">13</b> hits</span></div><div class="forge-last-hit" id="forge-last-hit">Each new live revolution strikes the enemy.</div><div class="forge-tactic-heading">COMBAT STANCE <small>Changes next pedal strike</small></div><div id="forge-tactics" class="forge-tactics"><button data-forge-action="tactic" data-key="balanced" type="button">⚖️ Balanced</button><button data-forge-action="tactic" data-key="assault" type="button">⚔️ Assault</button><button data-forge-action="tactic" data-key="guard" type="button">🛡️ Guard</button></div><div class="forge-stance-explain" id="forge-stance-explain">Balanced: normal damage and defense.</div><p class="mini-hint forge-rule">No death or forced retreat: the emergency shield keeps your hull at 1 HP and preserves enemy damage. Only manually confirmed prestige resets game progression.</p></div>
+        </div>
+        <div id="forge-burst" class="forge-burst" hidden>
+          <div class="forge-burst-heading">
+            <label for="forge-burst-meter">⚡ Flywheel Burst</label>
+            <span id="forge-burst-status"></span>
+          </div>
+          <progress id="forge-burst-meter" aria-describedby="forge-burst-status" value="0"></progress>
         </div>
         <div class="forge-battle-bottom"><div class="forge-battle-counters"><span>💀 <b id="forge-kills">0</b> defeated</span><span>👑 <b id="forge-bosses">0</b> bosses</span><span>🧰 <b id="forge-retreats">0</b> repairs</span></div><div id="forge-battle-feed" class="forge-battle-feed" aria-live="off"></div></div>
       </div>

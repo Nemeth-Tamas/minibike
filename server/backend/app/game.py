@@ -17,6 +17,7 @@ PRESTIGE_MIN_REVS = 2_000
 POINT_EVERY_REVS = 150
 WAVES_PER_SECTOR = 5
 MAX_SECTOR = 99
+FLYWHEEL_BURST_HITS = 12
 
 # id, name, description, base price, geometric growth numerator/denominator,
 # maximum level, additive Torque per revolution, yield bonus percent per level.
@@ -81,6 +82,9 @@ SKILLS = (
     ('stockpile', 'ENGINEERING', 'Stockpile', '+10% Scrap per level', 3, ('artisan', 2), 0, 0, 0),
     ('optimizer', 'ENGINEERING', 'Optimizer', '+10% Torque and +2 attack per level', 3, ('salvage', 2), 0, 10, 0),
     ('blade', 'COMBAT', 'Jagged Teeth', '+3 attack per level', 3, None, 0, 0, 0),
+    ('flywheel_burst', 'COMBAT', 'Flywheel Burst',
+     f'Every {FLYWHEEL_BURST_HITS}th hit deals double damage or adds 6 damage, whichever is higher.',
+     1, None, 0, 0, 0),
     ('precision', 'COMBAT', 'Precision Bearings', 'Increase critical hit frequency', 3, ('blade', 2), 0, 0, 0),
     ('berserker', 'COMBAT', 'Berserker', '+15% attack per level', 3, ('blade', 2), 0, 0, 0),
     ('boss_breaker', 'COMBAT', 'Boss Breaker', '+35% damage against bosses', 1, ('berserker', 2), 0, 0, 0),
@@ -319,6 +323,10 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
     if critical:
         damage *= 2
     damage = max(1, damage - enemy['armor'])
+    if s.get('flywheel_burst') and attacks % FLYWHEEL_BURST_HITS == 0:
+        bonus = max(6, damage)
+        damage += bonus
+        _log(con, device, pulse_ms, f'⚡ Flywheel Burst! +{bonus} damage against {enemy["name"]}.')
     hp -= damage
     counter = 0
     if hp > 0 and attacks % 8 == 0:
@@ -449,6 +457,9 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
                               max_level=cap,cost=cost,can_buy=bool(cost is not None and c['relics']>=cost)))
     hero=_hero_stats(u,s,traits)
     enemy=_enemy(c['sector'],c['wave'])
+    burst = None
+    if s.get('flywheel_burst'):
+        burst = dict(charge=c['attacks'] % FLYWHEEL_BURST_HITS, hits=FLYWHEEL_BURST_HITS)
     log=[dict(at_ms=r[0],description=r[1]) for r in con.execute(
         'SELECT at_ms,description FROM forge_battle_log WHERE device_id=? ORDER BY id DESC LIMIT 6',
         (device,))]
@@ -474,6 +485,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
                     enemy_max_hp=enemy['hp'],hero_hp=min(c['hero_hp'],hero['hull']),
                     hero_max_hp=hero['hull'],hero_attack=hero['attack'],armor=hero['armor'],
                     crit_every=hero['crit_every'],attacks=c['attacks'],retreats=c['retreats'],
+                    burst=burst,
                     last_hit=c['last_hit'],last_counter=c['last_counter'],
                     last_crit=bool(c['last_crit']),last_loot=c['last_loot'],
                     log=log,permanent=permanent,
