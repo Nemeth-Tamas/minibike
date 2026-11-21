@@ -383,6 +383,18 @@ async def api_forge_prestige(device: str, request: Request):
     except (ValueError, json.JSONDecodeError) as exc:
         return JSONResponse({'error': str(exc)}, status_code=400)
 
+
+@app.post('/api/v1/devices/{device}/forge/mode')
+async def api_forge_mode(device: str, request: Request):
+    """Explicit, persisted game participation; never affects bike recording."""
+    try:
+        obj = await _small_json(request)
+        if set(obj) != {'enabled'} or type(obj['enabled']) is not bool:
+            raise ValueError('enabled must be a boolean')
+        return game.set_enabled(device, obj['enabled'])
+    except (ValueError, json.JSONDecodeError) as exc:
+        return JSONResponse({'error': str(exc)}, status_code=400)
+
 # v0.5 GEARBOUND. All combat advancement comes from MQTT ingest, never HTTP.
 @app.post('/api/v1/devices/{device}/forge/tactic')
 async def api_forge_tactic(device: str, request: Request):

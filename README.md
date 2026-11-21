@@ -1,6 +1,6 @@
 # PEDAL — DIY exercise-bike telemetry and pedal-powered incremental game
 
-An ESP32-C6 SuperMini counts a real normally-open reed switch, preserves events in AT24C256 EEPROM, and sends them via authenticated MQTT to a Docker Compose server on Ubuntu. SQLite stores individual revolutions and bounded aggregates; a live web dashboard supplies cadence, sessions, goals, achievements, fitness analytics and the **GEARBOUND** combat-incremental RPG (pedal instead of clicking).
+An ESP32-C6 SuperMini counts a real normally-open reed switch, preserves events in AT24C256 EEPROM, and sends them via authenticated MQTT to a Docker Compose server on Ubuntu. SQLite stores individual revolutions and bounded aggregates; a live web dashboard supplies cadence, sessions, goals, achievements, fitness analytics and the **GEARBOUND** combat-incremental RPG with a persisted GAME ON/OFF switch and no involuntary deaths/resets (pedal instead of clicking).
 
 ## Source layout
 

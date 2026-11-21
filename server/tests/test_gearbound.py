@@ -144,7 +144,7 @@ def test_many_visible_skills_and_prerequisites():
     assert game.learn(DEVICE,'precision')['combat']['crit_every']==11
 
 
-def test_wipeout_recovers_without_losing_real_history_or_scrap():
+def test_emergency_shield_preserves_enemy_damage_and_prevents_involuntary_reset():
     game.state(DEVICE)
     now=int(time.time()*1000)
     with store.db() as c:
@@ -152,9 +152,11 @@ def test_wipeout_recovers_without_losing_real_history_or_scrap():
         for i in range(8):
             game.on_event(c,DEVICE,now+i*900,now+i*900)
     result=game.state(DEVICE)
-    assert result['combat']['retreats']==1
-    assert result['combat']['hero_hp']==100
+    assert result['combat']['retreats']==0
+    assert result['combat']['hero_hp']==1
+    assert result['combat']['enemy_hp']==983
     assert result['combat']['scrap']==40
+    assert result['combat']['wave']==1
     assert result['run_revs']==8
 
 

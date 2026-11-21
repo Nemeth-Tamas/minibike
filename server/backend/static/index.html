@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101922">
-  <title>PEDAL · Gearbound v0.5</title>
-  <link rel="stylesheet" href="/static/styles.css?v=0.5">
-  <script src="/static/feature-ui.js?v=0.5" defer></script>
-  <script src="/static/forge-ui.js?v=0.5" defer></script>
-  <script src="/static/app.js?v=0.5" defer></script>
+  <title>PEDAL · Gearbound v0.5.1</title>
+  <link rel="stylesheet" href="/static/styles.css?v=0.5.1">
+  <script src="/static/feature-ui.js?v=0.5.1" defer></script>
+  <script src="/static/forge-ui.js?v=0.5.1" defer></script>
+  <script src="/static/app.js?v=0.5.1" defer></script>
 </head>
 <body>
   <div class="shell">
@@ -55,7 +55,8 @@
     </section>
 
     <section id="forge-panel" class="card forge-card" aria-label="Gearbound pedal-powered RPG">
-      <div class="card-top forge-heading"><div><div class="eyebrow">PEDAL GEARBOUND · LIVE COMBAT RPG · v0.5</div><h2>⚔️ The Cranklands</h2></div><span class="mini-hint">NO AFK INCOME · NO IDLE DAMAGE</span></div>
+      <div class="card-top forge-heading"><div><div class="eyebrow">PEDAL GEARBOUND · OPTIONAL COMBAT RPG · v0.5.1</div><h2>⚔️ The Cranklands</h2></div><div class="forge-mode-controls"><span class="forge-mode-indicator" id="forge-mode-status" aria-live="polite">Loading mode…</span><button id="forge-mode-toggle" data-forge-action="mode" data-key="off" type="button" aria-pressed="false">Turn game OFF</button></div></div>
+      <p class="forge-mode-hint" id="forge-mode-hint">With the game OFF, your workout is still recorded; all game progression freezes.</p>
       <p class="subtle forge-lead">Pedal to strike monsters and earn Torque. Defeat enemies for Scrap, invest in production or combat, clear bosses for permanent Relics, then prestige for stronger future runs. Real workouts and lifetime history are never reset.</p>
       <div class="forge-stats">
         <div class="forge-stat"><small>⚙ TORQUE BANK</small><strong class="forge-highlight" id="forge-wallet">0</strong><span id="forge-rate" class="forge-stats-foot">+1 per revolution</span></div>
@@ -69,7 +70,7 @@
         <div id="forge-waves" class="forge-waves" aria-label="Sector encounter progression"></div>
         <div class="forge-arena-layout">
           <div class="forge-enemy-panel"><div id="forge-enemy-art" class="forge-enemy-art" aria-hidden="true">🐀</div><div class="forge-enemy-name" id="forge-enemy-name">Rust Rat</div><p class="subtle" id="forge-enemy-desc">Approaching...</p><div class="forge-health-heading"><span>ENEMY HULL</span><strong id="forge-enemy-health">55 / 55</strong></div><div class="forge-hp-track"><div id="forge-enemy-bar" class="forge-hp-fill enemy"></div></div></div>
-          <div class="forge-player-panel"><div class="forge-health-heading"><span>YOUR MACHINE</span><strong id="forge-player-health">100 / 100</strong></div><div class="forge-hp-track"><div id="forge-player-bar" class="forge-hp-fill player"></div></div><div class="forge-combat-stats"><span>⚔️ Damage <b id="forge-attack">2</b></span><span>🛡️ Armor <b id="forge-armor">0</b></span><span>💥 Crit / <b id="forge-crit">13</b> hits</span></div><div class="forge-last-hit" id="forge-last-hit">Each new live revolution strikes the enemy.</div><div class="forge-tactic-heading">COMBAT STANCE <small>Changes next pedal strike</small></div><div id="forge-tactics" class="forge-tactics"><button data-forge-action="tactic" data-key="balanced" type="button">⚖️ Balanced</button><button data-forge-action="tactic" data-key="assault" type="button">⚔️ Assault</button><button data-forge-action="tactic" data-key="guard" type="button">🛡️ Guard</button></div><div class="forge-stance-explain" id="forge-stance-explain">Balanced: normal damage and defense.</div><p class="mini-hint forge-rule">Enemy counterattacks only on every eighth live pedal hit. Stopping means a complete pause, not a penalty.</p></div>
+          <div class="forge-player-panel"><div class="forge-health-heading"><span>YOUR MACHINE</span><strong id="forge-player-health">100 / 100</strong></div><div class="forge-hp-track"><div id="forge-player-bar" class="forge-hp-fill player"></div></div><div class="forge-combat-stats"><span>⚔️ Damage <b id="forge-attack">2</b></span><span>🛡️ Armor <b id="forge-armor">0</b></span><span>💥 Crit / <b id="forge-crit">13</b> hits</span></div><div class="forge-last-hit" id="forge-last-hit">Each new live revolution strikes the enemy.</div><div class="forge-tactic-heading">COMBAT STANCE <small>Changes next pedal strike</small></div><div id="forge-tactics" class="forge-tactics"><button data-forge-action="tactic" data-key="balanced" type="button">⚖️ Balanced</button><button data-forge-action="tactic" data-key="assault" type="button">⚔️ Assault</button><button data-forge-action="tactic" data-key="guard" type="button">🛡️ Guard</button></div><div class="forge-stance-explain" id="forge-stance-explain">Balanced: normal damage and defense.</div><p class="mini-hint forge-rule">No death or forced retreat: the emergency shield keeps your hull at 1 HP and preserves enemy damage. Only manually confirmed prestige resets game progression.</p></div>
         </div>
         <div class="forge-battle-bottom"><div class="forge-battle-counters"><span>💀 <b id="forge-kills">0</b> defeated</span><span>👑 <b id="forge-bosses">0</b> bosses</span><span>🧰 <b id="forge-retreats">0</b> repairs</span></div><div id="forge-battle-feed" class="forge-battle-feed" aria-live="off"></div></div>
       </div>

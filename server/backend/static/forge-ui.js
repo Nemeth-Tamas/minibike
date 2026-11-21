@@ -1,5 +1,5 @@
 'use strict';
-/* PEDAL GEARBOUND v0.5 — the backend is authoritative; no click-to-earn actions. */
+/* PEDAL GEARBOUND v0.5.1 — server-persisted GAME ON/OFF, no forced resets. */
 window.PedalForge = (() => {
   let device = 'bike-001';
   let lastFetch = 0;
@@ -125,6 +125,19 @@ window.PedalForge = (() => {
   }
   function render(s) {
     const prev=previous;
+    const active=Boolean(s.enabled);
+    const modeButton=el('forge-mode-toggle');
+    if(modeButton) {
+      modeButton.textContent=active?'Pause game · OFF':'Resume game · ON';
+      modeButton.dataset.key=active?'off':'on';
+      modeButton.disabled=working;
+      modeButton.setAttribute('aria-pressed',String(active));
+    }
+    set('forge-mode-status',active?'⚔️ GAME ON':'🚴 GAME OFF · FITNESS ONLY');
+    set('forge-mode-hint',active?
+      'Battles and game rewards advance only while you pedal. No deaths or involuntary resets.' :
+      'Exercise recording, goals and fitness achievements continue normally. Game currencies, enemies and skill progress are frozen.');
+    el('forge-panel').classList.toggle('forge-paused',!active);
     if(prev && s.total_game_revs>prev.total_game_revs) {
       set('forge-pulse',`+${fmt(s.total_game_revs-prev.total_game_revs)} newly committed revolutions`);
     }
@@ -135,6 +148,7 @@ window.PedalForge = (() => {
       feedback(`⚔️ Enemy down! Scrap bank: ${fmt(s.combat.scrap)}. Keep pedaling!`);
     }
     previous=s;
+    // Browsing remains available while paused; mutations are disabled.
     set('forge-wallet',fmt(s.torque));
     set('forge-rate',`+${fmt(s.torque_per_rev)} ⚙ / revolution`);
     set('forge-run',fmt(s.run_revs));
@@ -162,6 +176,8 @@ window.PedalForge = (() => {
     el('forge-skills').replaceChildren(...s.skills.filter(i=>i.branch===skillTab).map(skillCard));
     set('forge-relic-balance',`${fmt(s.combat.relics)} 💎 available`);
     el('forge-permanent').replaceChildren(...s.combat.permanent.map(relicCard));
+    if(!active) el('forge-panel').querySelectorAll('button[data-forge-action]:not(#forge-mode-toggle)')
+      .forEach(button=>{button.disabled=true;});
   }
   async function refresh(force=false) {
     if(loading||working||(!force&&Date.now()-lastFetch<2500)) return;
@@ -172,6 +188,17 @@ window.PedalForge = (() => {
   }
   async function act(action,key) {
     if(working) return;
+    if(action==='mode') {
+      working=true;
+      try {
+        const s=await request('/mode',{enabled:key==='on'});
+        render(s);
+        feedback(s.enabled?'⚔️ Game resumed!':'🚴 Game paused. Your workout tracking continues.');
+      } catch(error) { feedback(error.message,true); }
+      finally { working=false;lastFetch=0;await refresh(true); }
+      return;
+    }
+    if(previous&&!previous.enabled) { feedback('Game is OFF. Resume it to make changes.',true);return; }
     if(action==='prestige'&&!confirm('Prestige resets THIS RUN: Torque, Scrap, sector, enemies, upgrades and skill levels. PERMANENT: relic research, relic bank, cores, lifetime combat wins, cycling history and achievements. Continue?')) return;
     const calls={buy:['/buy',{item_id:key}],skill:['/skill',{skill_id:key}],
       tactic:['/tactic',{tactic:key}],relic:['/relic',{trait_id:key}],prestige:['/prestige',{}]};

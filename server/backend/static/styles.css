@@ -202,3 +202,16 @@ button:hover{filter:brightness(1.1)}
 @media(max-width:420px){.forge-tactics button{font-size:10px;padding:8px 4px}.forge-battle-counters{gap:4px}}
 
 .forge-stance-explain{font-size:11px;color:#aaccb5;line-height:1.5}
+
+/* v0.5.1: visible, accessible server-persisted game pause control */
+.forge-mode-controls{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.forge-mode-indicator{font-size:12px;font-weight:800;color:#70dcc0;letter-spacing:.03em}
+.forge-mode-controls button{cursor:pointer;background:#254b43;color:#d6fff1;border:1px solid #75c9a8;border-radius:9px;padding:10px 14px;font-weight:800}
+.forge-mode-controls button:hover:not(:disabled){background:#326456}
+.forge-mode-controls button:disabled{opacity:.5;cursor:wait}
+.forge-mode-hint{font-size:12px;color:#bbd0d3;margin:8px 0 15px;line-height:1.6}
+.forge-paused .forge-mode-indicator{color:#e9c17a}
+.forge-paused .forge-mode-controls button{background:#274858;border-color:#80bed6}
+.forge-paused .forge-arena{opacity:.56}
+.forge-paused button[data-forge-action]:not(#forge-mode-toggle){cursor:not-allowed}
+@media(max-width:650px){.forge-mode-controls{justify-content:flex-start}}

@@ -47,3 +47,6 @@ If user asks about the project in a new chat, read this handover **and current G
 ## Last development milestone (2026-11-20)
 
 GEARBOUND v0.5 authored and verified locally: expanded combat loop, enemy sectors and bosses, tactical modes, 20 upgrades, 33 skill nodes, 4 permanent relic traits, new authenticated routes and mobile-responsive HUD. No firmware changes. A browser rendered in headless Chromium at desktop/mobile widths with no JS errors or overflow; 51 tests passed before final packaging (see test suite for latest count). Production deployment on delta2 was **not** performed from ChatGPT. Always check GitHub commit and current server before deployment.
+
+## Game safety contract (v0.5.1)
+The browser has a server-persisted GAME ON/OFF toggle. OFF freezes all game advancement/actions but never physical revolution logging, exercise goals or achievements. The 1 HP emergency shield prevents involuntary battle resets or lost boss damage. Prestige is manual only. See docs/GAME_DESIGN.md. Live delta2 deployment of v0.5.1 is not confirmed.

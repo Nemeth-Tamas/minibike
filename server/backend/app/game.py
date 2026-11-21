@@ -157,6 +157,10 @@ CREATE TABLE IF NOT EXISTS forge_combat (
     last_crit INTEGER NOT NULL DEFAULT 0, last_loot INTEGER NOT NULL DEFAULT 0,
     tactic TEXT NOT NULL DEFAULT 'balanced', last_activity_ms INTEGER
 );
+CREATE TABLE IF NOT EXISTS forge_preferences (
+    device_id TEXT PRIMARY KEY,
+    enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1))
+);
 CREATE TABLE IF NOT EXISTS forge_relic_traits (
     device_id TEXT NOT NULL, trait_id TEXT NOT NULL, level INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY(device_id,trait_id)
@@ -195,6 +199,30 @@ def _enemy(sector: int, wave: int) -> dict:
 def _ensure(con: sqlite3.Connection, device: str) -> None:
     con.execute('INSERT OR IGNORE INTO forge_state(device_id) VALUES(?)', (device,))
     con.execute('INSERT OR IGNORE INTO forge_combat(device_id) VALUES(?)', (device,))
+    con.execute('INSERT OR IGNORE INTO forge_preferences(device_id) VALUES(?)', (device,))
+
+
+def _require_enabled(con: sqlite3.Connection, device: str) -> None:
+    if not con.execute(
+            'SELECT enabled FROM forge_preferences WHERE device_id=?', (device,)
+    ).fetchone()[0]:
+        raise ValueError('Game is OFF. Turn it on to change your build.')
+
+
+def set_enabled(device: str, enabled: bool) -> dict:
+    """Pause/resume only the fictional game. Telemetry is never disabled."""
+    store._id(device, 'device_id')
+    if type(enabled) is not bool:
+        raise ValueError('enabled must be a boolean')
+    with store.db() as con:
+        con.execute('BEGIN IMMEDIATE')
+        _ensure(con, device)
+        con.execute('UPDATE forge_preferences SET enabled=? WHERE device_id=?',
+                    (int(enabled), device))
+        # Never carry a cadence combo across a pause, even if very short.
+        con.execute('''UPDATE forge_state SET last_live_pulse_ms=NULL,combo=0
+                       WHERE device_id=?''', (device,))
+    return state(device)
 
 
 def _levels(con: sqlite3.Connection, device: str, table: str, key: str) -> dict[str, int]:
@@ -337,14 +365,12 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
         return
 
     if hull <= 0:
-        _log(con, device, pulse_ms,
-             f"🛠️ Emergency repair! {enemy['name']} forced a retreat. No workout progress lost.")
-        con.execute('''UPDATE forge_combat SET enemy_hp=?,hero_hp=?,retreats=retreats+1,
-            defeats_this_wave=MIN(10,defeats_this_wave+1),attacks=?,
-            last_hit=?,last_counter=?,last_crit=?,last_loot=0,last_activity_ms=?
-            WHERE device_id=?''',
-            (enemy['hp'], hero['hull'], attacks, damage, counter, critical, pulse_ms, device))
-        return
+        # No deaths, retreats, lost loot, or enemy resets. Only player-chosen
+        # prestige can reset the campaign. Armor still protects the hull.
+        if c['hero_hp'] > 1:
+            _log(con, device, pulse_ms,
+                 '🛡️ Emergency shield engaged! Hull held at 1; fight progress preserved.')
+        hull = 1
 
     con.execute('''UPDATE forge_combat SET enemy_hp=?,hero_hp=?,attacks=?,
         last_hit=?,last_counter=?,last_crit=?,last_loot=0,last_activity_ms=?
@@ -355,6 +381,11 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
 def on_event(con: sqlite3.Connection, device: str, pulse_ms: int, received_ms: int) -> None:
     """Only called within the original ingest transaction after INSERT succeeded."""
     _ensure(con, device)
+    # OFF freezes ALL game progression, while the enclosing ingest transaction
+    # continues to journal the real pulse, session, goals and achievements.
+    if not con.execute('SELECT enabled FROM forge_preferences WHERE device_id=?',
+                       (device,)).fetchone()[0]:
+        return
     state = con.execute('SELECT * FROM forge_state WHERE device_id=?', (device,)).fetchone()
     u = _levels(con, device, 'forge_upgrades', 'item_id')
     s = _levels(con, device, 'forge_skills', 'skill_id')
@@ -382,6 +413,8 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
     _ensure(con,device)
     row=dict(con.execute('SELECT * FROM forge_state WHERE device_id=?',(device,)).fetchone())
     c=dict(con.execute('SELECT * FROM forge_combat WHERE device_id=?',(device,)).fetchone())
+    enabled=bool(con.execute('SELECT enabled FROM forge_preferences WHERE device_id=?',
+                             (device,)).fetchone()[0])
     u=_levels(con,device,'forge_upgrades','item_id')
     s=_levels(con,device,'forge_skills','skill_id')
     traits=_levels(con,device,'forge_relic_traits','trait_id')
@@ -420,6 +453,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
         'SELECT at_ms,description FROM forge_battle_log WHERE device_id=? ORDER BY id DESC LIMIT 6',
         (device,))]
     row.update(dict(
+        enabled=enabled,
         torque_per_rev=round(_yield_scaled(u,s,row['cores'],row['combo'],traits)/100,2),
         skill_points_available=available,skill_points_earned=row['run_revs']//POINT_EVERY_REVS,
         skill_points_every_revs=POINT_EVERY_REVS,
@@ -444,7 +478,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
                     last_crit=bool(c['last_crit']),last_loot=c['last_loot'],
                     log=log,permanent=permanent,
                     last_activity_ms=c['last_activity_ms'],
-                    rule='Pedal to strike. Enemies only strike back every 8 live pedal hits; no idle damage.'),
+                    rule='Game OFF freezes combat. Game ON: enemies counter only on pedal hits. Shield prevents death or forced resets.'),
     ))
     return row
 
@@ -462,6 +496,7 @@ def purchase(device: str, item: str) -> dict:
     with store.db() as con:
         con.execute('BEGIN IMMEDIATE')
         _ensure(con,device)
+        _require_enabled(con,device)
         u=con.execute('SELECT level FROM forge_upgrades WHERE device_id=? AND item_id=?',
                       (device,item)).fetchone()
         level=u['level'] if u else 0
@@ -495,6 +530,7 @@ def learn(device: str, skill: str) -> dict:
     with store.db() as con:
         con.execute('BEGIN IMMEDIATE')
         _ensure(con,device)
+        _require_enabled(con,device)
         current=con.execute('SELECT run_revs,skill_spent FROM forge_state WHERE device_id=?',
                             (device,)).fetchone()
         skills=_levels(con,device,'forge_skills','skill_id')
@@ -522,6 +558,7 @@ def set_tactic(device: str, tactic: str) -> dict:
     with store.db() as con:
         con.execute('BEGIN IMMEDIATE')
         _ensure(con,device)
+        _require_enabled(con,device)
         con.execute('UPDATE forge_combat SET tactic=? WHERE device_id=?',(tactic,device))
     return state(device)
 
@@ -533,6 +570,7 @@ def permanent_upgrade(device: str, trait: str) -> dict:
     with store.db() as con:
         con.execute('BEGIN IMMEDIATE')
         _ensure(con,device)
+        _require_enabled(con,device)
         levels=_levels(con,device,'forge_relic_traits','trait_id')
         level=levels.get(trait,0)
         cap=RELIC_BY_ID[trait][3]
@@ -556,6 +594,7 @@ def prestige(device: str, now_ms: int | None = None) -> dict:
     with store.db() as con:
         con.execute('BEGIN IMMEDIATE')
         _ensure(con,device)
+        _require_enabled(con,device)
         row=con.execute('SELECT * FROM forge_state WHERE device_id=?',(device,)).fetchone()
         if row['run_revs']<PRESTIGE_MIN_REVS:
             raise ValueError(f'Prestige requires {PRESTIGE_MIN_REVS:,} revolutions this run')

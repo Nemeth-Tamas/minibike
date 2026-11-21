@@ -49,3 +49,12 @@ After 2,000 run revolutions, prestige awards 1 core per 2,000 revolutions (cappe
 ## Future priorities
 
 Add **world maps and enemy art**, encounter choices (without minting resources by clicking), drops/rarities, boss mechanics telegraphed over multiple safe pedal strokes, challenges that reward technique rather than speed, build presets and analytics for how enjoyable each boss feels. None should incentivize unsafe RPM or punish breaks. Simulate progression beyond 100K revolutions before further major economic changes.
+
+
+## v0.5.1 — Player-controlled participation and no involuntary resets
+
+- The server-persisted **GAME ON / GAME OFF** control is in the GEARBOUND header. Switching OFF is immediate for newly ingested events: real revolutions still populate SQLite, sessions, goals, achievement unlocks and fitness charts, but **no new Torque, skill progress, damage, Scrap, Relics or enemies** are generated. Missed game rewards are not backfilled when switching ON.
+- Existing resources, equipment, enemy HP and sector are frozen while OFF. All game purchases and prestige are disabled until switching ON. A cadence combo is cleared when switching modes.
+- **No death or forced retreats.** The emergency shield prevents hull falling below 1 HP. The enemy keeps its current damaged HP, and the sector, resources and inventory remain unchanged. Previously recorded retreat totals are retained only as historical statistics.
+- **Prestige is the only run reset.** It requires an explicit confirmation and never touches exercise records. Game OFF persists across browser closure, backend restart and Docker redeployment.
+- Fitness monitoring is never controlled by the RPG switch, even while the game is paused.
