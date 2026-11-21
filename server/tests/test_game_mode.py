@@ -64,7 +64,8 @@ def test_no_death_enemy_hp_never_resets_on_shield_trigger():
     for seq in range(9, 19):
         pedal(seq, base + seq*900)
     end = game.state(D)
-    assert end['combat']['enemy_hp'] == 14
+    # Attack 13 is a guaranteed critical strike, adding two extra damage.
+    assert end['combat']['enemy_hp'] == 12
     assert end['combat']['wave'] == 1
     assert end['combat']['retreats'] == 0
 
