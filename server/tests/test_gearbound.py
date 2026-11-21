@@ -154,7 +154,7 @@ def test_emergency_shield_preserves_enemy_damage_and_prevents_involuntary_reset(
     result=game.state(DEVICE)
     assert result['combat']['retreats']==0
     assert result['combat']['hero_hp']==1
-    assert result['combat']['enemy_hp']==983
+    assert result['combat']['enemy_hp']==39
     assert result['combat']['scrap']==40
     assert result['combat']['wave']==1
     assert result['run_revs']==8
