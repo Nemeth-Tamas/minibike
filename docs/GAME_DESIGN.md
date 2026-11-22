@@ -18,7 +18,7 @@ Neither Scrap nor Relics can be minted by a REST endpoint. The device is protect
 - **Every live sensor revolution**: award Torque, perform an automatic attack. New events older than 15 seconds still earn Torque but **do not fight**, keeping offline replays from racing through bosses.
 - **Attack**: base 2 damage; armor on enemies reduces damage by at most to 1. Increasing steady cadence (starting from five consecutive ~45+ RPM sensor intervals) adds modest combo damage. Critical hits occur at predictable intervals (base every 13 attacks) to make progress readable. Fast pedaling is not required to win: slower riders can upgrade their weapons.
 - **Enemy retaliation**: after every eight live attacks, the enemy retaliates if alive. It never attacks on a wall-clock timer; simply stepping away from the bike cannot hurt your character.
-- **Hull loss**: if it reaches zero, you suffer an **automatic workshop retreat** that restores health and the current enemy. No real-life data or Scrap is deleted. Repeated failed attempts make the enemy's next counterattacks slightly weaker (pity system).
+- **Hull loss**: v0.5 originally used an automatic workshop retreat. v0.5.1 replaced it with the emergency shield described below.
 - **Victory**: earn Scrap, recover hull, keep the fight moving. The lightweight battle log retains the newest twenty events per device.
 - **Stances**: Balanced = base damage/counterdamage; Assault = +50% outgoing and incoming; Guard = -20% outgoing and -35% incoming. Changing stance is allowed at any time and costs no currency.
 
@@ -58,3 +58,10 @@ Add **world maps and enemy art**, encounter choices (without minting resources b
 - **No death or forced retreats.** The emergency shield prevents hull falling below 1 HP. The enemy keeps its current damaged HP, and the sector, resources and inventory remain unchanged. Previously recorded retreat totals are retained only as historical statistics.
 - **Prestige is the only run reset.** It requires an explicit confirmation and never touches exercise records. Game OFF persists across browser closure, backend restart and Docker redeployment.
 - Fitness monitoring is never controlled by the RPG switch, even while the game is paused.
+
+## v0.6 preview — Boss openings and ride contracts
+
+- **Boss tells:** Six boss identities have distinct windups and stance responses. The arena shows a tell for five hits before the move resolves. Use the indicated stance on the resolving hit to open the boss's armor for the next six hits. The opening adds at least 3 damage per hit. Missing the response leaves the normal fight running.
+- **Flywheel Burst:** Learn this Combat skill for one point. Every twelfth live hit adds at least 6 damage, with a larger bonus on powerful hits. The arena meter shows when the next burst will fire.
+- **Ride contracts:** Start Steady Work for 60 live hits, Scrap Run for three wins, or Boss Bounty for a boss win. You can pause or switch contracts and keep progress. Rewards deposit on the qualifying event, and a finished contract can be selected again. Contract progress and completion history survive Prestige.
+- **Save behavior:** The update adds two SQLite tables and leaves existing rows in place. An existing boss keeps its current hull and starts its first tell cycle on the next live hit. GAME OFF freezes tells, openings, bursts and contracts. Delayed or duplicate pulses cannot advance them. There are no wall-clock deadlines.
