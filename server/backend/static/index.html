@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#101922">
   <title>PEDAL · Gearbound</title>
-  <link rel="stylesheet" href="/static/styles.css?v=0.6-dev">
+  <link rel="stylesheet" href="/static/styles.css?v=0.6-encounters">
   <script src="/static/feature-ui.js?v=0.5.1" defer></script>
-  <script src="/static/forge-ui.js?v=0.6-dev" defer></script>
+  <script src="/static/forge-ui.js?v=0.6-encounters" defer></script>
   <script src="/static/app.js?v=0.5.1" defer></script>
 </head>
 <body>
@@ -55,7 +55,7 @@
     </section>
 
     <section id="forge-panel" class="card forge-card" aria-label="Gearbound pedal-powered RPG">
-      <div class="card-top forge-heading"><div><div class="eyebrow">PEDAL GEARBOUND · OPTIONAL COMBAT RPG · v0.5.1</div><h2>⚔️ The Cranklands</h2></div><div class="forge-mode-controls"><span class="forge-mode-indicator" id="forge-mode-status" aria-live="polite">Loading mode…</span><button id="forge-mode-toggle" data-forge-action="mode" data-key="off" type="button" aria-pressed="false">Turn game OFF</button></div></div>
+      <div class="card-top forge-heading"><div><div class="eyebrow">PEDAL GEARBOUND · v0.6 PREVIEW</div><h2>⚔️ The Cranklands</h2></div><div class="forge-mode-controls"><span class="forge-mode-indicator" id="forge-mode-status" aria-live="polite">Loading mode…</span><button id="forge-mode-toggle" data-forge-action="mode" data-key="off" type="button" aria-pressed="false">Turn game OFF</button></div></div>
       <p class="forge-mode-hint" id="forge-mode-hint">With the game OFF, your workout is still recorded; all game progression freezes.</p>
       <p class="subtle forge-lead">Pedal to strike monsters and earn Torque. Defeat enemies for Scrap, invest in production or combat, clear bosses for permanent Relics, then prestige for stronger future runs. Real workouts and lifetime history are never reset.</p>
       <div class="forge-stats">
@@ -65,9 +65,22 @@
         <div class="forge-stat"><small>✨ PRESTIGE CORES</small><strong id="forge-cores">0</strong><span class="forge-stats-foot">Permanent production bonus</span></div>
       </div>
       <div class="forge-meta"><span id="forge-combo">Build a cadence combo for bonus damage</span><span><strong id="forge-run">0</strong> this run · <strong id="forge-credited">0</strong> game revolutions · Prestige <strong id="forge-prestige-level">0</strong></span></div>
-      <div class="forge-arena" aria-label="Live enemy encounter">
+      <div class="forge-arena" id="forge-arena" aria-label="Live enemy encounter">
         <div class="forge-sector-top"><div><span class="eyebrow">REGION <strong id="forge-sector">1</strong></span><h3 id="forge-sector-name">Scrapyard Outskirts</h3></div><div class="forge-wave-label"><span id="forge-boss-label" class="forge-boss-label">FIELD ENCOUNTER</span><small id="forge-wave-count">Wave 1 / 5</small></div></div>
         <div id="forge-waves" class="forge-waves" aria-label="Sector encounter progression"></div>
+        <section id="forge-boss-readout" class="forge-boss-readout" aria-labelledby="forge-boss-move" hidden>
+          <div class="forge-boss-readout-head">
+            <div>
+              <span class="forge-boss-phase" id="forge-boss-phase"></span>
+              <h4 id="forge-boss-move"></h4>
+            </div>
+            <button type="button" class="forge-action forge-counter" id="forge-boss-counter"
+                    data-forge-action="tactic" hidden></button>
+          </div>
+          <p id="forge-boss-hint"></p>
+          <progress id="forge-boss-meter" aria-labelledby="forge-boss-move"
+                    aria-describedby="forge-boss-hint" value="0"></progress>
+        </section>
         <div class="forge-arena-layout">
           <div class="forge-enemy-panel"><div id="forge-enemy-art" class="forge-enemy-art" aria-hidden="true">🐀</div><div class="forge-enemy-name" id="forge-enemy-name">Rust Rat</div><p class="subtle" id="forge-enemy-desc">Approaching...</p><div class="forge-health-heading"><span>ENEMY HULL</span><strong id="forge-enemy-health">55 / 55</strong></div><div class="forge-hp-track"><div id="forge-enemy-bar" class="forge-hp-fill enemy"></div></div></div>
           <div class="forge-player-panel"><div class="forge-health-heading"><span>YOUR MACHINE</span><strong id="forge-player-health">100 / 100</strong></div><div class="forge-hp-track"><div id="forge-player-bar" class="forge-hp-fill player"></div></div><div class="forge-combat-stats"><span>⚔️ Damage <b id="forge-attack">2</b></span><span>🛡️ Armor <b id="forge-armor">0</b></span><span>💥 Crit / <b id="forge-crit">13</b> hits</span></div><div class="forge-last-hit" id="forge-last-hit">Each new live revolution strikes the enemy.</div><div class="forge-tactic-heading">COMBAT STANCE <small>Changes next pedal strike</small></div><div id="forge-tactics" class="forge-tactics"><button data-forge-action="tactic" data-key="balanced" type="button">⚖️ Balanced</button><button data-forge-action="tactic" data-key="assault" type="button">⚔️ Assault</button><button data-forge-action="tactic" data-key="guard" type="button">🛡️ Guard</button></div><div class="forge-stance-explain" id="forge-stance-explain">Balanced: normal damage and defense.</div><p class="mini-hint forge-rule">No death or forced retreat: the emergency shield keeps your hull at 1 HP and preserves enemy damage. Only manually confirmed prestige resets game progression.</p></div>
@@ -79,8 +92,27 @@
           </div>
           <progress id="forge-burst-meter" aria-describedby="forge-burst-status" value="0"></progress>
         </div>
-        <div class="forge-battle-bottom"><div class="forge-battle-counters"><span>💀 <b id="forge-kills">0</b> defeated</span><span>👑 <b id="forge-bosses">0</b> bosses</span><span>🧰 <b id="forge-retreats">0</b> repairs</span></div><div id="forge-battle-feed" class="forge-battle-feed" aria-live="off"></div></div>
+        <div class="forge-battle-bottom"><div class="forge-battle-counters"><span>💀 <b id="forge-kills">0</b> defeated</span><span>👑 <b id="forge-bosses">0</b> bosses</span></div><div id="forge-battle-feed" class="forge-battle-feed" aria-live="off"></div></div>
+        <div id="forge-arena-message" class="forge-arena-message" role="status"></div>
       </div>
+      <section class="forge-contract-board" aria-labelledby="forge-contract-title">
+        <h3 id="forge-contract-title">📜 Ride contracts</h3>
+        <p class="subtle" id="forge-contract-summary">Pick one goal. Switch or pause it anytime and keep your progress.</p>
+        <div id="forge-contracts" class="forge-contract-grid"></div>
+        <div id="forge-contract-message" class="forge-arena-message" role="status"></div>
+      </section>
+      <template id="forge-contract-card">
+        <article class="forge-contract">
+          <h4 data-contract-name></h4>
+          <p class="subtle" data-contract-goal></p>
+          <div class="forge-contract-details">
+            <span data-contract-reward></span>
+            <span data-contract-progress></span>
+          </div>
+          <progress data-contract-meter value="0"></progress>
+          <button type="button" class="forge-action" data-forge-action="contract"></button>
+        </article>
+      </template>
       <div class="forge-layout">
         <div class="forge-block"><div class="forge-section-head"><div><h3>🛠️ Upgrade workshop <span id="forge-upgrade-count" class="forge-count"></span></h3><p class="subtle">Choose your build: Torque generation, damage, defense, or loot.</p></div></div><div id="forge-shop-tabs" class="forge-tabs" role="group" aria-label="Workshop category"></div><div id="forge-upgrades" class="forge-item-grid"><span class="placeholder">Loading workshop…</span></div></div>
         <div class="forge-block"><div class="forge-section-head"><div><h3>🌳 Skill tree <span id="forge-skill-count" class="forge-count"></span></h3><p class="subtle"><strong id="forge-points">0 free / 0 earned</strong> · <span id="forge-point-next">150 rev to next skill point</span>. Pick a specialization; points reset on prestige.</p></div></div><div id="forge-skill-tabs" class="forge-tabs" role="group" aria-label="Skill branch"></div><div id="forge-skills" class="forge-tree"><span class="placeholder">Loading skill tree…</span></div></div>

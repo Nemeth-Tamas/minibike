@@ -183,6 +183,35 @@ button:hover{filter:brightness(1.1)}
 .forge-burst-heading{display:flex;flex-wrap:wrap;justify-content:space-between;gap:4px 12px;color:#ffda96;font-size:12px}
 .forge-burst-heading label{font-weight:800}
 .forge-burst progress{display:block;width:100%;height:10px;margin-top:7px;accent-color:#f6bc65}
+.forge-boss-readout{--tell:#afd3ed;margin:10px 0 16px;padding:13px 16px;border:1px solid #426070;border-radius:12px;background:#12242f}
+.forge-boss-readout-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 16px}
+.forge-boss-phase{font-size:10px;font-weight:800;letter-spacing:.12em;color:var(--tell)}
+.forge-boss-readout h4{margin:4px 0 0;color:#f4f7fb;font-size:18px}
+.forge-boss-readout p{margin:7px 0;font-size:12px;color:#d4e8ed}
+.forge-boss-readout progress,.forge-contract progress{display:block;width:100%;height:9px;appearance:none;border:0;border-radius:6px;overflow:hidden;background:#31414a;accent-color:var(--tell)}
+.forge-boss-readout progress::-webkit-progress-bar,.forge-contract progress::-webkit-progress-bar{background:#31414a}
+.forge-boss-readout progress::-webkit-progress-value,.forge-contract progress::-webkit-progress-value{background:var(--tell);border-radius:6px}
+.forge-boss-readout progress::-moz-progress-bar,.forge-contract progress::-moz-progress-bar{background:var(--tell);border-radius:6px}
+.forge-boss-readout .forge-counter{width:auto;padding:0 16px;min-height:44px;font-size:13px}
+.forge-boss-readout .forge-counter[hidden]{display:none}
+.forge-arena[data-boss-phase="windup"] .forge-boss-readout{--tell:#ffcb84;background:#30251d;border-color:#b67b43}
+.forge-arena[data-boss-phase="opening"] .forge-boss-readout{--tell:#87f0c6;background:#17332e;border-color:#5aaf90}
+.forge-arena[data-boss-phase="opening"] .forge-enemy-panel{border-color:#78d7b5}
+.forge-arena-message{font-size:12px;color:#a3f6d7}
+.forge-arena-message:not(:empty){margin-top:10px}
+.forge-arena-message.forge-error{color:#ffad9d}
+.forge-contract-board{margin:16px 0 22px;padding:clamp(12px,2vw,20px);border:1px solid #466769;border-radius:13px;background:#10252b}
+.forge-contract-board h3{margin:0;color:#e2f4eb;font-size:17px}
+.forge-contract-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.forge-contract{--tell:#8ba9b1;display:grid;gap:8px;align-content:start;padding:13px;border:1px solid #365059;border-radius:10px;background:#142933}
+.forge-contract[data-state="active"]{--tell:#8de8bf;border-color:#68c4a4;background:#18352f}
+.forge-contract[data-state="complete"]{--tell:#f6bc65;border-color:#8e704a}
+.forge-contract h4,.forge-contract p{margin:0}
+.forge-contract h4{color:#eaf8f2;font-size:14px}
+.forge-contract-details{display:flex;flex-wrap:wrap;justify-content:space-between;gap:5px 10px;font-size:11px;color:#cce9df}
+.forge-contract .forge-action{margin-top:4px;min-height:44px}
+.forge-contract .forge-action:focus-visible,.forge-counter:focus-visible{outline:2px solid #fff;outline-offset:2px}
+@media(max-width:650px){.forge-contract-grid{grid-template-columns:1fr}}
 .forge-battle-bottom{margin-top:15px;display:grid;grid-template-columns:1fr 1.7fr;gap:12px;align-items:start}
 .forge-battle-counters{display:flex;flex-wrap:wrap;gap:9px;font-size:11px;color:#c2d5d8}
 .forge-battle-counters span{background:#192d35;border-radius:7px;padding:9px}

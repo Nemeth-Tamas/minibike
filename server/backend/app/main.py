@@ -416,3 +416,17 @@ async def api_forge_relic(device: str, request: Request):
         return game.permanent_upgrade(device, obj['trait_id'])
     except (ValueError, json.JSONDecodeError) as exc:
         return JSONResponse({'error': str(exc)}, status_code=400)
+
+
+@app.post('/api/v1/devices/{device}/forge/contract')
+async def api_forge_contract(device: str, request: Request):
+    try:
+        obj = await _small_json(request)
+        if set(obj) != {'contract_id'}:
+            raise ValueError('contract_id required')
+        contract_id = obj['contract_id']
+        if contract_id is not None and not isinstance(contract_id, str):
+            raise ValueError('contract_id must be a string or null')
+        return game.set_contract(device, contract_id)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return JSONResponse({'error': str(exc)}, status_code=400)

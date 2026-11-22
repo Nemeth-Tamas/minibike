@@ -18,6 +18,9 @@ POINT_EVERY_REVS = 150
 WAVES_PER_SECTOR = 5
 MAX_SECTOR = 99
 FLYWHEEL_BURST_HITS = 12
+BOSS_CYCLE_HITS = 16
+BOSS_TELL_HITS = 5
+BOSS_OPENING_HITS = 6
 
 # id, name, description, base price, geometric growth numerator/denominator,
 # maximum level, additive Torque per revolution, yield bonus percent per level.
@@ -121,10 +124,24 @@ ENEMIES = (
     ('Hydraulic Gnawer', '🦾', 'Armor-piercing machinery', 130, 4, 2),
     ('The Bent Crank', '👹', 'SECTOR BOSS · Guardian of the scrap', 260, 6, 2),
 )
-BOSS_NAMES = ('The Bent Crank', 'The Static Widow', 'The Iron Cyclops',
-              'The Oil Tyrant', 'The Reactor Warden', 'The Endless Gear')
+# Name, symbol, windup and stance that creates an opening.
+BOSSES = (
+    ('The Bent Crank', '🦾', 'Piston Slam', 'guard'),
+    ('The Static Widow', '🕷️', 'Web Volley', 'assault'),
+    ('The Iron Cyclops', '👁️', 'Tracking Beam', 'balanced'),
+    ('The Oil Tyrant', '🛢️', 'Pressure Surge', 'guard'),
+    ('The Reactor Warden', '☢️', 'Core Charge', 'assault'),
+    ('The Endless Gear', '⚙️', 'Grinding Sweep', 'balanced'),
+)
 SECTOR_NAMES = ('Scrapyard Outskirts', 'Copper Tunnels', 'Corroded Foundry',
                 'Storm Dynamo', 'Reactor Core', 'The Clockwork Frontier')
+
+# Name, goal text, progress trigger, target, Torque, Scrap.
+CONTRACTS = {
+    'steady_work': ('Steady Work', 'Land 60 live hits', 'hit', 60, 75, 0),
+    'scrap_run': ('Scrap Run', 'Win 3 encounters', 'victory', 3, 0, 30),
+    'boss_bounty': ('Boss Bounty', 'Defeat a sector boss', 'boss', 1, 100, 40),
+}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS forge_state (
@@ -165,6 +182,18 @@ CREATE TABLE IF NOT EXISTS forge_preferences (
     device_id TEXT PRIMARY KEY,
     enabled INTEGER NOT NULL DEFAULT 1 CHECK(enabled IN (0,1))
 );
+CREATE TABLE IF NOT EXISTS forge_boss_encounters (
+    device_id TEXT PRIMARY KEY, sector INTEGER NOT NULL,
+    hits INTEGER NOT NULL, opening_hits INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS forge_contracts (
+    device_id TEXT NOT NULL, contract_id TEXT NOT NULL,
+    progress INTEGER NOT NULL DEFAULT 0, completions INTEGER NOT NULL DEFAULT 0,
+    active INTEGER NOT NULL DEFAULT 0 CHECK(active IN (0,1)),
+    PRIMARY KEY(device_id,contract_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS forge_one_active_contract
+    ON forge_contracts(device_id) WHERE active=1;
 CREATE TABLE IF NOT EXISTS forge_relic_traits (
     device_id TEXT NOT NULL, trait_id TEXT NOT NULL, level INTEGER NOT NULL DEFAULT 0,
     PRIMARY KEY(device_id,trait_id)
@@ -186,14 +215,15 @@ def initialize() -> None:
 def _enemy(sector: int, wave: int) -> dict:
     idx = max(1, min(WAVES_PER_SECTOR, wave)) - 1
     name, emoji, subtitle, hp, attack, armor = ENEMIES[idx]
-    if idx == WAVES_PER_SECTOR-1:
-        name = BOSS_NAMES[(sector-1) % len(BOSS_NAMES)]
+    boss = idx == WAVES_PER_SECTOR-1
+    if boss:
+        name, emoji, _, _ = BOSSES[(sector-1) % len(BOSSES)]
         subtitle = 'SECTOR BOSS · Defeat to advance to the next region'
     # Growth per sector is ~42%, while upgrades scale in steps and bring
     # their own Scrap costs. Avoid exponential runaway after sector 25.
     factor = 1.42 ** min(24, sector-1)
     factor *= 1 + max(0, sector-25) * .15
-    return dict(name=name, emoji=emoji, subtitle=subtitle, boss=idx == 4,
+    return dict(name=name, emoji=emoji, subtitle=subtitle, boss=boss,
                 hp=max(1, min(1_000_000_000, round(hp * factor))),
                 attack=min(1_000_000, attack + (sector-1)*2),
                 armor=min(1_000_000, armor + max(0, sector-2)),
@@ -297,8 +327,90 @@ def _log(con: sqlite3.Connection, device: str, at_ms: int, message: str) -> None
                 (device, device))
 
 
+def _boss_progress(con: sqlite3.Connection, device: str, sector: int) -> tuple[int, int]:
+    row = con.execute('''SELECT hits,opening_hits FROM forge_boss_encounters
+        WHERE device_id=? AND sector=?''', (device, sector)).fetchone()
+    return (row['hits'], row['opening_hits']) if row else (0, 0)
+
+
+def _boss_view(con: sqlite3.Connection, device: str, sector: int) -> dict:
+    hits, opening = _boss_progress(con, device, sector)
+    _, _, move, response = BOSSES[(sector-1) % len(BOSSES)]
+    remaining = BOSS_CYCLE_HITS - hits
+    phase = 'circling'
+    if opening:
+        phase = 'opening'
+    elif remaining <= BOSS_TELL_HITS:
+        phase = 'windup'
+    return dict(move=move, response=response, phase=phase, hits_until_move=remaining,
+                cycle_hits=BOSS_CYCLE_HITS, opening_hits=opening,
+                opening_size=BOSS_OPENING_HITS)
+
+
+def _advance_boss(con: sqlite3.Connection, device: str, sector: int, pulse_ms: int,
+                  hits: int, opening: int, tactic: str) -> None:
+    hits = (hits + 1) % BOSS_CYCLE_HITS
+    opening = max(0, opening - 1)
+    _, _, move, response = BOSSES[(sector-1) % len(BOSSES)]
+    if hits == 0 and tactic == response:
+        opening = BOSS_OPENING_HITS
+        _log(con, device, pulse_ms,
+             f'🎯 Countered {move}! The next {opening} hits deal bonus damage.')
+    con.execute('''INSERT INTO forge_boss_encounters(device_id,sector,hits,opening_hits)
+        VALUES(?,?,?,?) ON CONFLICT(device_id) DO UPDATE SET
+        sector=excluded.sector,hits=excluded.hits,opening_hits=excluded.opening_hits''',
+        (device, sector, hits, opening))
+
+
+def _award_torque(con: sqlite3.Connection, device: str, amount: int) -> None:
+    con.execute('''UPDATE forge_state SET torque=MIN(?,torque+?),
+        run_earned=MIN(?,run_earned+?),total_earned=MIN(?,total_earned+?)
+        WHERE device_id=?''',
+        (MAX_BALANCE, amount, MAX_BALANCE, amount, MAX_BALANCE, amount, device))
+
+
+def _contract_views(con: sqlite3.Connection, device: str) -> list[dict]:
+    saved = {r['contract_id']: r for r in con.execute(
+        'SELECT * FROM forge_contracts WHERE device_id=?', (device,))}
+    views = []
+    for key, (name, goal, _, target, torque, scrap) in CONTRACTS.items():
+        row = saved.get(key)
+        views.append(dict(id=key, name=name, goal=goal, target=target, torque=torque, scrap=scrap,
+                          active=bool(row and row['active']), progress=row['progress'] if row else 0,
+                          completions=row['completions'] if row else 0))
+    return views
+
+
+def _advance_contract(con: sqlite3.Connection, device: str, pulse_ms: int, outcome: str) -> None:
+    active = con.execute('''SELECT contract_id,progress FROM forge_contracts
+        WHERE device_id=? AND active=1''', (device,)).fetchone()
+    if active is None:
+        return
+    key = active['contract_id']
+    contract = CONTRACTS.get(key)
+    if contract is None:
+        return
+    name, _, trigger, target, torque, scrap = contract
+    if trigger == 'boss' and outcome != 'boss':
+        return
+    if trigger == 'victory' and outcome == 'hit':
+        return
+    progress = min(target, active['progress'] + 1)
+    completed = progress == target
+    con.execute('''UPDATE forge_contracts SET progress=?,active=?,completions=completions+?
+        WHERE device_id=? AND contract_id=?''',
+        (progress, int(not completed), int(completed), device, key))
+    if completed:
+        if torque:
+            _award_torque(con, device, torque)
+        if scrap:
+            con.execute('UPDATE forge_combat SET scrap=MIN(?,scrap+?) WHERE device_id=?',
+                        (MAX_BALANCE, scrap, device))
+        _log(con, device, pulse_ms, f'📜 Contract completed: {name}. Rewards deposited.')
+
+
 def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int,
-                 u: dict, s: dict, t: dict) -> None:
+                 u: dict, s: dict, t: dict) -> str:
     c = con.execute('SELECT * FROM forge_combat WHERE device_id=?', (device,)).fetchone()
     enemy = _enemy(c['sector'], c['wave'])
     hero = _hero_stats(u, s, t)
@@ -323,6 +435,10 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
     if critical:
         damage *= 2
     damage = max(1, damage - enemy['armor'])
+    if enemy['boss']:
+        boss_hits, opening = _boss_progress(con, device, c['sector'])
+        if opening:
+            damage += max(3, damage // 2)
     if s.get('flywheel_burst') and attacks % FLYWHEEL_BURST_HITS == 0:
         bonus = max(6, damage)
         damage += bonus
@@ -366,11 +482,11 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
         # Victory Torque is earned from a real pedal event, never from clicking.
         extra = min(500_000, (10 + c['sector']*3) * s.get('collector', 0) // 10)
         if extra:
-            con.execute('''UPDATE forge_state SET torque=MIN(?,torque+?),
-                run_earned=MIN(?,run_earned+?),total_earned=MIN(?,total_earned+?)
-                WHERE device_id=?''',
-                (MAX_BALANCE, extra, MAX_BALANCE, extra, MAX_BALANCE, extra, device))
-        return
+            _award_torque(con, device, extra)
+        if enemy['boss']:
+            con.execute('DELETE FROM forge_boss_encounters WHERE device_id=?', (device,))
+            return 'boss'
+        return 'victory'
 
     if hull <= 0:
         # No deaths, retreats, lost loot, or enemy resets. Only player-chosen
@@ -384,6 +500,9 @@ def _combat_step(con: sqlite3.Connection, device: str, pulse_ms: int, combo: int
         last_hit=?,last_counter=?,last_crit=?,last_loot=0,last_activity_ms=?
         WHERE device_id=?''',
         (hp, hull, attacks, damage, counter, critical, pulse_ms, device))
+    if enemy['boss']:
+        _advance_boss(con, device, c['sector'], pulse_ms, boss_hits, opening, c['tactic'])
+    return 'hit'
 
 
 def on_event(con: sqlite3.Connection, device: str, pulse_ms: int, received_ms: int) -> None:
@@ -414,7 +533,8 @@ def on_event(con: sqlite3.Connection, device: str, pulse_ms: int, received_ms: i
         pulse_ms if live else None,combo,fraction,device))
     # No combat progress on stale events, historical backfill, or MQTT duplicates.
     if live:
-        _combat_step(con,device,pulse_ms,combo,u,s,t)
+        outcome = _combat_step(con, device, pulse_ms, combo, u, s, t)
+        _advance_contract(con, device, pulse_ms, outcome)
 
 
 def _view(con: sqlite3.Connection, device: str) -> dict:
@@ -457,6 +577,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
                               max_level=cap,cost=cost,can_buy=bool(cost is not None and c['relics']>=cost)))
     hero=_hero_stats(u,s,traits)
     enemy=_enemy(c['sector'],c['wave'])
+    boss = _boss_view(con, device, c['sector']) if enemy['boss'] else None
     burst = None
     if s.get('flywheel_burst'):
         burst = dict(charge=c['attacks'] % FLYWHEEL_BURST_HITS, hits=FLYWHEEL_BURST_HITS)
@@ -470,6 +591,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
         skill_points_every_revs=POINT_EVERY_REVS,
         next_skill_point_at=(row['run_revs']//POINT_EVERY_REVS+1)*POINT_EVERY_REVS,
         upgrades=upgrades,skills=skills,
+        contracts=_contract_views(con, device),
         prestige_available=row['run_revs']>=PRESTIGE_MIN_REVS,
         prestige_min_revs=PRESTIGE_MIN_REVS,
         next_prestige_cores=max(1,min(20,row['run_revs']//PRESTIGE_MIN_REVS)),
@@ -485,7 +607,7 @@ def _view(con: sqlite3.Connection, device: str) -> dict:
                     enemy_max_hp=enemy['hp'],hero_hp=min(c['hero_hp'],hero['hull']),
                     hero_max_hp=hero['hull'],hero_attack=hero['attack'],armor=hero['armor'],
                     crit_every=hero['crit_every'],attacks=c['attacks'],retreats=c['retreats'],
-                    burst=burst,
+                    burst=burst,boss=boss,
                     last_hit=c['last_hit'],last_counter=c['last_counter'],
                     last_crit=bool(c['last_crit']),last_loot=c['last_loot'],
                     log=log,permanent=permanent,
@@ -575,6 +697,26 @@ def set_tactic(device: str, tactic: str) -> dict:
     return state(device)
 
 
+def set_contract(device: str, contract_id: str | None) -> dict:
+    """Select a contract or pause the board, preserving unfinished progress."""
+    store._id(device, 'device_id')
+    if contract_id is not None and contract_id not in CONTRACTS:
+        raise ValueError('Unknown ride contract')
+    with store.db() as con:
+        con.execute('BEGIN IMMEDIATE')
+        _ensure(con, device)
+        _require_enabled(con, device)
+        con.execute('UPDATE forge_contracts SET active=0 WHERE device_id=? AND active=1',
+                    (device,))
+        if contract_id is not None:
+            _, _, _, target, _, _ = CONTRACTS[contract_id]
+            con.execute('''INSERT INTO forge_contracts(device_id,contract_id,active)
+                VALUES(?,?,1) ON CONFLICT(device_id,contract_id) DO UPDATE SET
+                active=1,progress=CASE WHEN progress>=? THEN 0 ELSE progress END''',
+                (device, contract_id, target))
+    return state(device)
+
+
 def permanent_upgrade(device: str, trait: str) -> dict:
     store._id(device,'device_id')
     if trait not in RELIC_BY_ID:
@@ -621,6 +763,7 @@ def prestige(device: str, now_ms: int | None = None) -> dict:
             (cores,device))
         con.execute('DELETE FROM forge_upgrades WHERE device_id=?',(device,))
         con.execute('DELETE FROM forge_skills WHERE device_id=?',(device,))
+        con.execute('DELETE FROM forge_boss_encounters WHERE device_id=?', (device,))
         traits=_levels(con,device,'forge_relic_traits','trait_id')
         max_hull=_hero_stats({}, {}, traits)['hull']
         con.execute('''UPDATE forge_combat SET sector=1,wave=1,enemy_hp=?,hero_hp=?,

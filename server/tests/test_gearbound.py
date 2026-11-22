@@ -226,6 +226,139 @@ def test_flywheel_burst_charges_on_live_hits_at_any_cadence():
     assert any('Flywheel Burst' in item['description'] for item in after['log'])
 
 
+def test_boss_tell_can_be_countered_after_a_rest_at_easy_cadence():
+    now = int(time.time() * 1000)
+    game.state(DEVICE)
+    with store.db() as con:
+        con.execute('UPDATE forge_combat SET wave=5,enemy_hp=260,hero_hp=1 WHERE device_id=?',
+                    (DEVICE,))
+    for seq in range(1, 12):
+        send(seq, now + seq * 2000)
+    fight = game.state(DEVICE)['combat']
+    assert fight['boss']['phase'] == 'windup'
+    assert fight['boss']['response'] == 'guard'
+    assert fight['boss']['hits_until_move'] == 5
+
+    # Missing the response is safe. Hull, boss damage and campaign progress survive.
+    for seq in range(12, 17):
+        send(seq, now + seq * 2000)
+    missed = game.state(DEVICE)['combat']
+    assert missed['boss']['phase'] == 'circling'
+    assert 0 < missed['enemy_hp'] < fight['enemy_hp']
+    assert missed['wave'] == 5 and missed['retreats'] == 0 and missed['hero_hp'] == 1
+
+    for seq in range(17, 28):
+        send(seq, now + seq * 2000)
+    ready = game.set_tactic(DEVICE, 'guard')['combat']
+    assert ready['boss']['hits_until_move'] == 5
+    assert send(28, now - 60000, now + 56000)['inserted'] == 1
+    game.set_enabled(DEVICE, False)
+    assert send(29, now + 58000)['inserted'] == 1
+    store.initialize()
+    assert game.state(DEVICE)['combat'] == ready
+
+    game.set_enabled(DEVICE, True)
+    rest = now + 600000
+    for seq in range(30, 35):
+        send(seq, rest + seq * 2000)
+    opening = game.state(DEVICE)['combat']
+    assert opening['boss']['phase'] == 'opening'
+    assert opening['boss']['opening_hits'] == 6
+    assert send(35, rest + 70000)['inserted'] == 1
+    hit = game.state(DEVICE)['combat']
+    assert opening['enemy_hp'] - hit['enemy_hp'] == 4
+    assert hit['boss']['opening_hits'] == 5
+    for seq in range(36, 41):
+        send(seq, rest + seq * 2000)
+    assert game.state(DEVICE)['combat']['boss']['phase'] == 'circling'
+
+
+def test_contract_switch_pause_and_repeat_preserve_progress_and_pay_once():
+    now = int(time.time() * 1000)
+    selected = game.set_contract(DEVICE, 'steady_work')
+    assert selected['torque'] == 0 and selected['contracts'][0]['active']
+    for seq in range(1, 11):
+        send(seq, now + seq * 2000)
+
+    switched = game.set_contract(DEVICE, 'scrap_run')['contracts']
+    assert switched[0]['progress'] == 10 and not switched[0]['active']
+    assert switched[1]['active']
+    with store.db() as con:
+        con.execute('UPDATE forge_combat SET enemy_hp=1 WHERE device_id=?', (DEVICE,))
+    send(11, now + 22000)
+    assert game.state(DEVICE)['contracts'][1]['progress'] == 1
+
+    game.set_contract(DEVICE, 'steady_work')
+    paused = game.set_contract(DEVICE, None)['contracts']
+    assert not any(contract['active'] for contract in paused)
+    assert send(12, now + 24000)['inserted'] == 1
+    store.initialize()
+    assert game.state(DEVICE)['contracts'] == paused
+
+    game.set_contract(DEVICE, 'steady_work')
+    assert send(13, now - 60000, now + 26000)['inserted'] == 1
+    game.set_enabled(DEVICE, False)
+    assert send(14, now + 28000)['inserted'] == 1
+    assert game.state(DEVICE)['contracts'][0]['progress'] == 10
+    with pytest.raises(ValueError, match='OFF'):
+        game.set_contract(DEVICE, 'boss_bounty')
+    before = game.set_enabled(DEVICE, True)
+    for seq in range(15, 65):
+        send(seq, now + seq * 2000)
+    complete = game.state(DEVICE)
+    assert complete['contracts'][0]['progress'] == 60
+    assert complete['contracts'][0]['completions'] == 1
+    assert not complete['contracts'][0]['active']
+    for field in ('torque', 'run_earned', 'total_earned'):
+        assert complete[field] == before[field] + 50 + 75
+    assert send(64, now + 128000)['inserted'] == 0
+    assert game.state(DEVICE)['torque'] == complete['torque']
+    replay = game.set_contract(DEVICE, 'steady_work')['contracts']
+    assert replay[0]['active'] and replay[0]['progress'] == 0 and replay[0]['completions'] == 1
+    assert replay[1]['progress'] == 1
+
+
+def test_boss_bounty_awards_both_rewards_after_boss_and_history_survives_prestige():
+    now = int(time.time() * 1000)
+    game.set_contract(DEVICE, 'boss_bounty')
+    with store.db() as con:
+        con.execute('UPDATE forge_combat SET enemy_hp=1 WHERE device_id=?', (DEVICE,))
+    send(1, now)
+    after_minion = game.state(DEVICE)
+    assert after_minion['contracts'][2]['progress'] == 0
+    with store.db() as con:
+        con.execute('UPDATE forge_combat SET wave=5,enemy_hp=1 WHERE device_id=?', (DEVICE,))
+        con.execute('UPDATE forge_state SET run_revs=2000 WHERE device_id=?', (DEVICE,))
+    send(2, now + 2000)
+    victory = game.state(DEVICE)
+    assert victory['contracts'][2]['completions'] == 1
+    assert victory['torque'] == after_minion['torque'] + 101
+    assert victory['combat']['scrap'] == after_minion['combat']['scrap'] + 98 + 40
+    assert victory['combat']['boss'] is None and victory['combat']['sector'] == 2
+    ascended = game.prestige(DEVICE)
+    assert ascended['contracts'] == victory['contracts']
+    assert store.summary(DEVICE)['lifetime_revolutions'] == 2
+
+
+def test_v06_migration_preserves_v051_save_and_paused_mode():
+    game.state(DEVICE)
+    game.set_enabled(DEVICE, False)
+    with store.db() as con:
+        con.execute('UPDATE forge_state SET torque=4321,run_revs=725 WHERE device_id=?', (DEVICE,))
+        con.execute('''UPDATE forge_combat SET wave=5,enemy_hp=109,hero_hp=1,scrap=70,retreats=2
+            WHERE device_id=?''', (DEVICE,))
+        # These tables do not exist in a v0.5.1 database.
+        con.execute('DROP TABLE forge_boss_encounters')
+        con.execute('DROP TABLE forge_contracts')
+    store.initialize()
+    migrated = game.state(DEVICE)
+    assert not migrated['enabled'] and migrated['torque'] == 4321 and migrated['run_revs'] == 725
+    assert migrated['combat']['enemy_hp'] == 109 and migrated['combat']['hero_hp'] == 1
+    assert migrated['combat']['scrap'] == 70 and migrated['combat']['retreats'] == 2
+    assert migrated['combat']['boss']['hits_until_move'] == 16
+    assert not any(contract['active'] for contract in migrated['contracts'])
+
+
 def test_scrap_and_torque_dual_currency_purchase_is_atomic():
     game.state(DEVICE)
     with store.db() as c:
